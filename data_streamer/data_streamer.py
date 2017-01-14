@@ -5,10 +5,10 @@ class DataStreamer(object):
     # returns a list of the data properties
 
     @abstractmethod
-    def get_data_properties(self):
+    def get_data_params(self):
         """
 
-        :return: a list of properties for sonification
+        :return: a list of parameters for sonification
         """
         raise NotImplementedError()
 
@@ -22,10 +22,28 @@ class DataStreamer(object):
         raise NotImplementedError()
 
     @abstractmethod
-    def get_value(self, property):
+    def get_value(self, param):
         """
 
-        :param property: the property to query
+        :param param: the property to query
         :return: current value of the property
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_mapper_for_param(self, param, sound_param):
+        """
+
+        :param param: the parameter to query
+        :param sound_param: the sound param to map to
+        :return: mapping logic for the property
+        """
+        raise NotImplementedError()
+
+    def get_supported_mappers_for_param(self, param):
+        """
+
+        :param param: the parameter to query
+        :return: supported mappers for parameter
         """
         raise NotImplementedError()

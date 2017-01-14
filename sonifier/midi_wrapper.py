@@ -35,9 +35,5 @@ class MidiWrapper(object):
             self._channels[channel].set_instrument(instrument)
         return self._channels[channel]
 
-if __name__ == '__main__':
-    m = MidiWrapper()
-    c0 = m.get_channel(0)
-    c1 = m.get_channel(1, 41)
-    c0.play_note(60, 120,2)
-    c1.play_note(65,120,3)
+    def set_channel_instrument(self, channel, instrument):
+        self._channels[channel].set_instrument(instrument)
