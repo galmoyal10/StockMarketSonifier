@@ -21,7 +21,7 @@ class DataStreamer(object):
         """
         raise NotImplementedError()
 
-    @abstractmethods
+    @abstractmethod
     def get_value(self, property):
         """
 
