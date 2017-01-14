@@ -6,12 +6,26 @@ class DataStreamer(object):
 
     @abstractmethod
     def get_data_properties(self):
+        """
+
+        :return: a list of properties for sonification
+        """
         raise NotImplementedError()
 
     @abstractmethod
     def get_data_current_state(self):
+
+        """
+
+        :return: dictionary of properties with their current value
+        """
         raise NotImplementedError()
 
+    @abstractmethods
     def get_value(self, property):
-        state = self.get_data_current_state()
-        return state[property]
+        """
+
+        :param property: the property to query
+        :return: current value of the property
+        """
+        raise NotImplementedError()
