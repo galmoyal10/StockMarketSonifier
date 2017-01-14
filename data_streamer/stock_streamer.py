@@ -26,25 +26,27 @@ class StockStreamer(DataStreamer):
             raise Exception("Could not find share named {0}".format(share_name))
 
         self._param_fetching_methods = {'price': self._share.get_price, 'last_trade_with_time':  self._share.get_last_trade_with_time}
+
+        # maps a parameter to a sound paramter and its corresponding mapping logic
         self._param_to_sound_param = {'price': {SoundParams.pitch : parameter_mappers.PitchMapper(120,1,self._price_to_pitch)},
                                       'last_trade_with_time': {SoundParams.amplitude : parameter_mappers.AmpMapper(60,120, self._last_trade_to_amp)}}
 
-    # returns a list of the data properties
+    # returns a list of the data parameters
     def get_data_params(self):
         """
 
-        :return: a list of properties for sonification
+        :return: a list of parameters for sonification
         """
         return self._param_fetching_methods.keys()
 
     @refreshable
-    def get_value(self, property):
+    def get_value(self, parameter):
         """
 
-        :param property: the property to query
+        :param parameter: the property to query
         :return: current value of the property
         """
-        return self._get_value(property)
+        return self._get_value(parameter)
 
     @refreshable
     def get_data_current_state(self):
@@ -52,11 +54,11 @@ class StockStreamer(DataStreamer):
 
         :return: dictionary of properties with their current value
         """
-        return {property: self._get_value(property) for property in self._param_fetching_methods}
+        return {parameter: self._get_value(parameter) for parameter in self._param_fetching_methods}
 
-    def _get_value(self, property):
-        assert property in self._param_fetching_methods.keys(), "Invalid property {0}".format(property)
-        return self._param_fetching_methods[property]()
+    def _get_value(self, parameter):
+        assert parameter in self._param_fetching_methods.keys(), "Invalid parameter {0}".format(parameter)
+        return self._param_fetching_methods[parameter]()
 
     def get_mapper_for_param(self, param, sound_param):
         return self._param_to_sound_param[param][sound_param]
