@@ -1,3 +1,5 @@
+from Queue import LifoQueue
+from threading import Thread
 import time
 
 class SonificationManager(object):
@@ -11,17 +13,25 @@ class SonificationManager(object):
         self._sonifier = sonifier
         self._mapping = mapping
         self._sample_rate = sample_rate
+        self._value_queues = dict()
+        self._values_queue = LifoQueue()
 
     def _sonify_next_values(self):
         values = []
         mappers = []
-        for param, sound_param in self._mapping.items():
-            values.append(self._data_streamer.get_value(param))
-            mappers.append(self._data_streamer.get_mapper_for_param(param, sound_param))
+        for parameter_name, value in self._values_queue.get().items():
+            values.append(value)
+            mappers.append(self._data_streamer.get_mapper_for_param(parameter_name, self._mapping[parameter_name]))
 
         self._sonifier.sonify_values(values, mappers)
 
+    def _cache_data(self):
+        while True:
+            self._values_queue.put(self._data_streamer.get_data_current_state())
+
     def run(self):
+        t = Thread(target=self._cache_data)
+        t.start()
         while True:
             time.sleep(self._sample_rate)
             self._sonify_next_values()

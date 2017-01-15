@@ -1,6 +1,7 @@
 from abc import ABCMeta, abstractmethod
 
-class DataStreamer(object):
+
+class SonifiableDataStreamer(object):
     __metaclass__ = ABCMeta
     # returns a list of the data properties
 

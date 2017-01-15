@@ -16,8 +16,8 @@ class Sonifier(object):
         for channel_index in len(data):
             self.sonify_value(channel_index, data[channel_index])
 
-    def sonify_value(self, channel, value, mepper):
-        note, amp, duration = mepper.map(value)
+    def sonify_value(self, channel, value, mapper):
+        note, amp, duration = mapper.map(value)
         self._player.get_channel(channel).play_note(note, amp, duration)
 
     def sonify_values(self, values, mappers):

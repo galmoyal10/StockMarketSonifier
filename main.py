@@ -1,10 +1,10 @@
-from data_streamer.stock_streamer import StockStreamer
+from data_streamer.stock_streamer import SonifiableStockStreamer
 from sonifier.sonifier import Sonifier
 from Consts import SoundParams
 from manager import SonificationManager
 
 if __name__ == '__main__':
-    streamer = StockStreamer('GOOG')
+    streamer = SonifiableStockStreamer('GOOG')
     sonifier = Sonifier([0, 115, 43])
     mapping = dict()
     mapping['price'] = SoundParams.pitch

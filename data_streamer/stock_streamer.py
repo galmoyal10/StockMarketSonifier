@@ -1,9 +1,10 @@
-from data_streamer import DataStreamer
+from data_streamer import SonifiableDataStreamer
 from yahoo_finance import Share
 from sonifier.parameter_mapping import parameter_mappers
 from Consts import SoundParams
 
-class StockStreamer(DataStreamer):
+
+class SonifiableStockStreamer(SonifiableDataStreamer):
     """
     example snippet:
         yahoo = StockStreamer("YHOO")
