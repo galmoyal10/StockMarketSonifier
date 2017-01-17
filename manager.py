@@ -23,11 +23,11 @@ class SonificationManager(object):
             values.append(value)
             mappers.append(self._data_streamer.get_mapper_for_param(parameter_name, self._mapping[parameter_name]))
 
-        self._sonifier.sonify_values(values, mappers)
+        self._sonifier._sonify_values(values, mappers)
 
     def _cache_data(self):
         while True:
-            self._values_queue.put(self._data_streamer.get_data_current_state())
+            self._values_queue.put(self._data_streamer.get_data_current_state(self._mapping.keys()))
 
     def run(self):
         t = Thread(target=self._cache_data)

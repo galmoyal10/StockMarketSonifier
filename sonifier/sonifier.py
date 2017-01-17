@@ -9,20 +9,21 @@ class Sonifier(object):
         self._supported_sonifiable_params = [SoundParams.pitch, SoundParams.amplitude, SoundParams.duration]
 
     def set_channels(self, instruments):
-        for channel_index in xrange(0, len(instruments)):
-            self._player.set_channel_instrument(channel_index, instruments[channel_index])
+        for channel_index, instument in enumerate(instruments):
+            self._player.set_channel_instrument(channel_index, instument)
 
     def sonify(self, data):
-        for channel_index in len(data):
-            self.sonify_value(channel_index, data[channel_index])
+        for channel_index, value in enumerate(data):
+            self._sonify_value(channel_index, value)
 
-    def sonify_value(self, channel, value, mapper):
+    def _sonify_value(self, channel, value, mapper):
         note, amp, duration = mapper.map(value)
+        print note, channel
         self._player.get_channel(channel).play_note(note, amp, duration)
 
-    def sonify_values(self, values, mappers):
+    def _sonify_values(self, values, mappers):
         for channel, value, mapping_func in zip(xrange(0, len(values)), values, mappers):
-            self.sonify_value(channel, value, mapping_func)
+            self._sonify_value(channel, value, mapping_func)
 
     def get_supported_sonifiable_params(self):
         return self._supported_sonifiable_params
