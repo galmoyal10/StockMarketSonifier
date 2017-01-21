@@ -60,7 +60,7 @@ class HistoricStockStreamer(SonifiableDataStreamer):
     price -> C + (price - <avg price in the given time>) / <discretization factor>
     """
     def _price_to_pitch(self, price_param, price_value):
-        return Consts.C + int(ceil(((price_value - self._avgs[price_param])+0.0000001) / self._price_stairs))
+        return Consts.C + int(ceil((price_value - self._avgs[price_param]) / self._price_stairs))
 
     """
     sonifying trade volume in the following logic:

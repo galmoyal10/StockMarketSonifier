@@ -1,8 +1,12 @@
 from data_streamer import SonifiableDataStreamer
 from yahoo_finance import Share
 from sonifier.parameter_mapping import parameter_mappers
+from datetime import datetime
+from math import ceil
 from Consts import SoundParams
+from Consts import C
 
+TIME_FORMAT = "%I:%M%p"
 
 class SonifiableStockStreamer(SonifiableDataStreamer):
     """
@@ -21,7 +25,7 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
 
         return func_wrapper
 
-    def __init__(self, share_name):
+    def __init__(self, share_name, price_stairs):
         self._share = Share(share_name)
         if self._share.get_name() is None:
             raise Exception("Could not find share named {0}".format(share_name))
@@ -31,6 +35,11 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         # maps a parameter to a sound paramter and its corresponding mapping logic
         self._param_to_sound_param = {'price': {SoundParams.pitch : parameter_mappers.PitchMapper(120,1,self._price_to_pitch)},
                                       'last_trade_with_time': {SoundParams.amplitude : parameter_mappers.AmpMapper(60,120, self._last_trade_to_amp)}}
+        self._last_trade_time = datetime(datetime.MINYEAR, 1, 1)
+        self._price_stairs = price_stairs
+        self._price_sum = 0
+        self._prices_sampled = 0
+
 
     # returns a list of the data parameters
     def get_data_params(self):
@@ -70,10 +79,23 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
     def get_supported_mappers_for_param(self, param):
         return self._param_to_sound_param[param].keys()
 
+    """
+    keeping an updated average price and calculating delta from it to current price
+    """
     def _price_to_pitch(self, price):
-        # TODO: implement price to pitch logic
-        return 60
+        self._prices_sampled += 1
+        self._price_sum =+ price
+        avg = self._price_sum / self._prices_sampled
+        return C + int(ceil((price - avg) / self._price_stairs))
 
-    def _last_trade_to_amp(self, last_trade_date):
-        # TODO: implement trade to amp logic
-        return 120
+    """
+    maps trade time to amplitude
+    playing the wanted instrument only when a new trade is detected
+    """
+    def _last_trade_to_amp(self, last_trade_date_str):
+        last_trade_date = datetime.strptime(last_trade_date_str, last_trade_date_str.split(' -')[0])
+        amp = 0
+        if last_trade_date > self._last_trade_time:
+            self._last_trade_time = last_trade_date
+            amp = 127
+        return amp
