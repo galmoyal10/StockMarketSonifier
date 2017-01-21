@@ -1,9 +1,11 @@
 from Queue import LifoQueue
 from threading import Thread
-import time
+from time import sleep
+from Consts import DEFAULT_TEMPO
+
 
 class SonificationManager(object):
-    def __init__(self, data_streamer, sonifier, mapping, sample_rate):
+    def __init__(self, data_streamer, sonifier, mapping):
         """
         Construct the main manager of the program
         :param data_streamer: list of data streamers
@@ -12,28 +14,36 @@ class SonificationManager(object):
         self._data_streamer = data_streamer
         self._sonifier = sonifier
         self._mapping = mapping
-        self._sample_rate = sample_rate
+        self._parameter_names = self._mapping.keys()
+        self._tempos = [DEFAULT_TEMPO] * len(self._parameter_names)
         self._value_queues = dict()
-        self._values_queue = LifoQueue()
+        for parameter in self._parameter_names:
+            self._value_queues[parameter] = LifoQueue()
 
-    def _sonify_next_values(self):
-        values = []
-        mappers = []
-        for parameter_name, value in self._values_queue.get().items():
-            values.append(value)
-            mappers.append(self._data_streamer.get_mapper_for_param(parameter_name, self._mapping[parameter_name]))
-
-        self._sonifier._sonify_values(values, mappers)
+    def _sonify_param(self, parameter_channel, parameter_name):
+        while True:
+            sonic_params = self._value_queues[parameter_name].get()
+            # tempo is controlled by the manager
+            tempo = sonic_params[0]
+            self._sonifier.sonify_values_for_channel(sonic_params[1:], parameter_channel)
+            sleep(tempo)
 
     def _cache_data(self):
         while True:
-            self._values_queue.put(self._data_streamer.get_data_current_state(self._mapping.keys()))
+            for parameter, mapping_method in self._mapping.items():
+                value = self._data_streamer.get_value(parameter)
+                mapped_notes = self._data_streamer.get_mapper_for_param(parameter, mapping_method).map(value)
+                self._value_queues[parameter].put(mapped_notes)
 
     def run(self):
-        t = Thread(target=self._cache_data)
-        t.start()
+        caching_thread = Thread(target=self._cache_data)
+        caching_thread.start()
+        sonification_threads = list()
+        for channel, parameter in enumerate(self._parameter_names):
+            sonifying_thread = Thread(target=self._sonify_param, args=[channel, parameter])
+            sonifying_thread.start()
+            sonification_threads.append(sonifying_thread)
         while True:
-            time.sleep(self._sample_rate)
-            self._sonify_next_values()
+            continue
         # initialize GUI with data_streamer.list_properties()
         # initialize GUI with sonifier.list_features(d)

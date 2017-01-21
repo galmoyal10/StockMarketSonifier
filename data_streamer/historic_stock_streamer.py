@@ -29,11 +29,12 @@ class HistoricStockStreamer(SonifiableDataStreamer):
         self._init_avgs()
         self._price_stairs = price_stairs
         self._param_to_sound_param = {
-            'Close': {SoundParams.pitch: PitchMapper(120, 1, partial(self._price_to_pitch, 'Close'))},
-            'High': {SoundParams.pitch: PitchMapper(120, 1, partial(self._price_to_pitch, 'High'))},
-            'Low': {SoundParams.pitch: PitchMapper(120, 1, partial(self._price_to_pitch, 'Low'))},
-            'Open': {SoundParams.pitch: PitchMapper(120, 1, partial(self._price_to_pitch, 'Open'))},
-            'Volume': {SoundParams.pitch: PitchMapper(120, 1, self._volume_to_pitch)}}
+            'Close': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, partial(self._price_to_pitch, 'Close')),
+                      SoundParams.tempo: TempoMapper(Consts.C, 120, 1, partial(self._price_to_tempo, 'Close'))},
+            'High': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, partial(self._price_to_pitch, 'High'))},
+            'Low': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, partial(self._price_to_pitch, 'Low'))},
+            'Open': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, partial(self._price_to_pitch, 'Open'))},
+            'Volume': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, self._volume_to_pitch)}}
 
     def _init_history(self, from_date, to_date):
         self._historic_data = self._share.get_historical(from_date, to_date)
@@ -56,11 +57,21 @@ class HistoricStockStreamer(SonifiableDataStreamer):
         self._volume_scale = 10 ** floor(log10(self._avgs['Volume']))
 
     """
-    sonifying price in the following logic:
+    sonifying price to pitch in the following logic:
     price -> C + (price - <avg price in the given time>) / <discretization factor>
+    for exapmle: a change of 1 dollar will cause (1 / discretization notes)
     """
     def _price_to_pitch(self, price_param, price_value):
         return Consts.C + int(ceil((price_value - self._avgs[price_param]) / self._price_stairs))
+
+    """
+    sonifying price to tempo in the following logic:
+    price -> 60 bmp - ((price - <avg price in the given time>) / 10)
+    for example: a change of 1 dollar will cause a change of 10 bmp
+    """
+    def _price_to_tempo(self, price_param, price_value):
+        # in order to prevent negative tempo
+        return max(0, Consts.DEFAULT_TEMPO - (ceil(price_value - self._avgs[price_param]) / 10))
 
     """
     sonifying trade volume in the following logic:
@@ -94,4 +105,9 @@ class HistoricStockStreamer(SonifiableDataStreamer):
         return self._params
 
     def get_value(self, param):
-        return self._historic_data[self._current_day][param]
+        # historic streamer is cyclic
+        if self._current_day == self._max_day:
+            self._current_day = 0
+        current_value = self._historic_data[self._current_day][param]
+        self._current_day += 1
+        return current_value
