@@ -6,7 +6,7 @@ class SonifiableDataStreamer(object):
     # returns a list of the data properties
 
     @abstractmethod
-    def get_data_params(self):
+    def get_data_params():
         """
 
         :return: a list of parameters for sonification

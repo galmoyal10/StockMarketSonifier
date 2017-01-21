@@ -33,12 +33,13 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
                                       'last_trade_with_time': {SoundParams.amplitude : parameter_mappers.AmpMapper(60,120, self._last_trade_to_amp)}}
 
     # returns a list of the data parameters
-    def get_data_params(self):
+    @staticmethod
+    def get_data_params():
         """
 
         :return: a list of parameters for sonification
         """
-        return self._param_fetching_methods.keys()
+        return ['price','last_trade_with_time']
 
     @refreshable
     def get_value(self, parameter):
