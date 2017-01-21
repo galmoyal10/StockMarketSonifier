@@ -1,4 +1,4 @@
-from midi_wrapper import MidiWrapper
+from sonifier.midi_wrapper import MidiWrapper
 from Consts import SoundParams
 
 class Sonifier(object):
@@ -18,7 +18,7 @@ class Sonifier(object):
 
     def _sonify_value(self, channel, value, mapper):
         note, amp, duration = mapper.map(value)
-        print note, channel
+        print((note, channel))
         self._player.get_channel(channel).play_note(note, amp, duration)
 
     def _sonify_values(self, values, mappers):

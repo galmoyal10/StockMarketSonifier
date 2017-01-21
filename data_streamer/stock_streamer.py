@@ -1,4 +1,5 @@
-from data_streamer import SonifiableDataStreamer
+
+from data_streamer.data_streamer import SonifiableDataStreamer
 from yahoo_finance import Share
 from sonifier.parameter_mapping import parameter_mappers
 from Consts import SoundParams
