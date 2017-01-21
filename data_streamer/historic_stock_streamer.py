@@ -1,6 +1,6 @@
 import Consts
 
-ifrom data_streamer.data_streamer import SonifiableDataStreamer
+from data_streamer.data_streamer import SonifiableDataStreamer
 from yahoo_finance import Share
 from sonifier.parameter_mapping.parameter_mappers import *
 from datetime import datetime
