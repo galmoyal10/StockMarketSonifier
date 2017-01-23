@@ -58,14 +58,12 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         return self._get_value(parameter)
 
     @refreshable
-    def get_data_current_state(self, requested_params=None):
+    def get_data_current_state(self):
         """
 
         :return: dictionary of properties with their current value
         """
         parameters = self._param_fetching_methods.keys()
-        if requested_params is not None:
-            parameters = requested_params
         return {parameter: self._get_value(parameter) for parameter in parameters}
 
     def _get_value(self, parameter):

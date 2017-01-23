@@ -29,12 +29,12 @@ class HistoricStockStreamer(SonifiableDataStreamer):
         self._init_avgs()
         self._price_stairs = price_stairs
         self._param_to_sound_param = {
-            'Close': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, partial(self._price_to_pitch, 'Close')),
-                      SoundParams.tempo: TempoMapper(Consts.C, 120, 1, partial(self._price_to_tempo, 'Close'))},
-            'High': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, partial(self._price_to_pitch, 'High'))},
-            'Low': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, partial(self._price_to_pitch, 'Low'))},
-            'Open': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, partial(self._price_to_pitch, 'Open'))},
-            'Volume': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, 120, 1, self._volume_to_pitch)}}
+            'Close': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_pitch, 'Close')),
+                      SoundParams.tempo: TempoMapper(Consts.DEFAULT_PITCH, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_tempo, 'Close'))},
+            'High': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_pitch, 'High'))},
+            'Low': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_pitch, 'Low'))},
+            'Open': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_pitch, 'Open'))},
+            'Volume': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, self._volume_to_pitch)}}
 
     def _init_history(self, from_date, to_date):
         self._historic_data = self._share.get_historical(from_date, to_date)
@@ -86,18 +86,11 @@ class HistoricStockStreamer(SonifiableDataStreamer):
     def get_supported_mappers_for_param(self, param):
         return self._param_to_sound_param[param].keys()
 
-    def get_data_current_state(self, requested_params=None):
+    def get_data_current_state(self):
         # historic streamer is cyclic
         if self._current_day == self._max_day:
             self._current_day = 0
-        current_state = deepcopy(self._historic_data[self._current_day])
-        # if specific fields requested, return only them
-        if requested_params is not None:
-            for unwanted_field in [unwanted_field for unwanted_field in self._params if unwanted_field not in requested_params]:
-                try:
-                    current_state.pop(unwanted_field)
-                except KeyError:
-                    print current_state
+        current_state = self._historic_data[self._current_day]
         self._current_day += 1
         return current_state
 

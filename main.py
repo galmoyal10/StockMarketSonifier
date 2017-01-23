@@ -6,10 +6,10 @@ from manager import SonificationManager
 
 if __name__ == '__main__':
 #    streamer = SonifiableStockStreamer('GOOG')
-    historic_streamer = HistoricStockStreamer('AAPL', '2016-09-01', '2016-09-25', 10)
-    sonifier = Sonifier([0,41])
+    historic_streamer = HistoricStockStreamer('ESLT', '2016-03-01', '2016-05-01', 10)
     mapping = dict()
-    mapping['Close'] = SoundParams.tempo
-    mapping['High'] = SoundParams.pitch
-    manager = SonificationManager(historic_streamer, sonifier, mapping)
+    mapping['Close'] = (SoundParams.pitch, 114)
+    mapping['Volume'] = (SoundParams.pitch, 108)
+
+    manager = SonificationManager(historic_streamer, Sonifier(), mapping)
     manager.run()

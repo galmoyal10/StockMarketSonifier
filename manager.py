@@ -1,7 +1,6 @@
 from Queue import LifoQueue
 from threading import Thread
 from time import sleep
-from Consts import DEFAULT_TEMPO
 
 
 class SonificationManager(object):
@@ -12,13 +11,16 @@ class SonificationManager(object):
         :param sonifier: sonifier with sonifies the data from the data streamers
         """
         self._data_streamer = data_streamer
-        self._sonifier = sonifier
         self._mapping = mapping
+        self._init_sonifier(sonifier)
         self._parameter_names = self._mapping.keys()
-        self._tempos = [DEFAULT_TEMPO] * len(self._parameter_names)
         self._value_queues = dict()
         for parameter in self._parameter_names:
             self._value_queues[parameter] = LifoQueue()
+
+    def _init_sonifier(self, sonifier):
+        self._sonifier = sonifier
+        self._sonifier.set_channels([instrument[1] for instrument in self._mapping.values()])
 
     def _sonify_param(self, parameter_channel, parameter_name):
         while True:
@@ -26,13 +28,15 @@ class SonificationManager(object):
             # tempo is controlled by the manager
             tempo = sonic_params[0]
             self._sonifier.sonify_values_for_channel(sonic_params[1:], parameter_channel)
+            print "Sonified {0}: tempo:{1}, pitch:{2}, volume:{3}, duration:{4}".format(parameter_name, *sonic_params)
             sleep(tempo)
 
     def _cache_data(self):
         while True:
+            values = self._data_streamer.get_data_current_state()
             for parameter, mapping_method in self._mapping.items():
-                value = self._data_streamer.get_value(parameter)
-                mapped_notes = self._data_streamer.get_mapper_for_param(parameter, mapping_method).map(value)
+                value = values[parameter]
+                mapped_notes = self._data_streamer.get_mapper_for_param(parameter, mapping_method[0]).map(value)
                 self._value_queues[parameter].put(mapped_notes)
 
     def run(self):
