@@ -27,9 +27,10 @@ class SonificationManager(object):
             sonic_params = self._value_queues[parameter_name].get()
             # tempo is controlled by the manager
             tempo = sonic_params[0]
-            self._sonifier.sonify_values_for_channel(sonic_params[1:], parameter_channel)
-            print "Sonified {0}: tempo:{1}, pitch:{2}, volume:{3}, duration:{4}".format(parameter_name, *sonic_params)
-            sleep(tempo)
+            print "Sonifing {0}: tempo:{1}, pitch:{2}, volume:{3}, duration:{4}".format(parameter_name, *sonic_params)
+            for i in xrange(0, int(1 / tempo)):
+                self._sonifier.sonify_values_for_channel(sonic_params[1:], parameter_channel)
+                sleep(tempo)
 
     def _cache_data(self):
         while True:

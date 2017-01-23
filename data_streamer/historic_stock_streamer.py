@@ -66,12 +66,12 @@ class HistoricStockStreamer(SonifiableDataStreamer):
 
     """
     sonifying price to tempo in the following logic:
-    price -> 60 bmp - ((price - <avg price in the given time>) / 10)
-    for example: a change of 1 dollar will cause a change of 10 bmp
+    price -> 1 + <price - <avg price>> beats in a second
+    for example: a change of 1 dollar will cause 2 beats per second
     """
     def _price_to_tempo(self, price_param, price_value):
         # in order to prevent negative tempo
-        return max(0, Consts.DEFAULT_TEMPO - (ceil(price_value - self._avgs[price_param]) / 10))
+        return min(1, (1 / (1 + max(0,(floor(price_value - self._avgs[price_param]))))))
 
     """
     sonifying trade volume in the following logic:
