@@ -40,7 +40,7 @@ class GUIUtils(object):
             if self._historic_ckbox.isChecked():
                 historic_streamer = HistoricStockStreamer(self._textbox.text(), self._start_date.date().toPyDate(), self._end_date.date().toPyDate(), 10)
                 #TODO : handle input validation
-                
+
                 mapping = dict()
                 mapping['Close'] = (SoundParams.tempo, 114)
                 mapping['Volume'] = (SoundParams.pitch, 108)
@@ -53,7 +53,7 @@ class GUIUtils(object):
 
         else:
             #TODO: stop the melody
-            self._textbox.setText("SDasaclicked.")
+            pass
 
 
     def _create_datetime_popup(self, text, position_x, position_y, initial_value = datetime.datetime.today()):
