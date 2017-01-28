@@ -1,7 +1,6 @@
 from Queue import LifoQueue
 from threading import Thread
 from time import sleep
-from gui import GUIUtils
 
 
 class SonificationManager(object):
@@ -41,13 +40,8 @@ class SonificationManager(object):
                 mapped_notes = self._data_streamer.get_mapper_for_param(parameter, mapping_method[0]).map(value)
                 self._value_queues[parameter].put(mapped_notes)
 
-    def _initialize_gui(self):
-        gui = GUIUtils()
-
-    def run(self):
-        #self._start_caching()
-        self._initialize_gui()
-
+    @staticmethod
+    def run():
         while True:
             continue
         # initialize GUI with data_streamer.list_properties()

@@ -3,6 +3,11 @@ import datetime
 from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtGui import *
 
+from data_streamer.stock_streamer import SonifiableStockStreamer
+from data_streamer.historic_stock_streamer import HistoricStockStreamer
+from sonifier.sonifier import Sonifier
+from Consts import SoundParams
+from manager import SonificationManager
 
 class GUIUtils(object):
 
@@ -17,20 +22,39 @@ class GUIUtils(object):
 
         self._textbox = self._create_textbox(20,20, 200, 40)
         self._create_sonify_btns()
-        self.historic_ckbox = self._create_checkbox("View historical data", 60, 60,self.on_historic_checkbox_click)
+        self._historic_ckbox = self._create_checkbox("View historical data", 60, 60, self.on_historic_checkbox_click)
 
         # Show the window and run the app
         self._w.show()
         app.exec_()
 
     def _create_sonify_btns(self):
-        self._create_btn("Sonify", 20,80,self.on_click)
-        self._create_btn("Stop sonification", 100, 80, self.on_click)
+        self._create_btn("Sonify", 20, 80, lambda : self.on_sonification_btn_click(True))
+        self._create_btn("Stop sonification", 100, 80, lambda:self.on_sonification_btn_click(False))
 
     # Create the actions
     @pyqtSlot()
-    def on_click(self):
-        self._textbox.setText("Button clicked.")
+    def on_sonification_btn_click(self, should_start):
+        if should_start:
+
+            if self._historic_ckbox.isChecked():
+                historic_streamer = HistoricStockStreamer(self._textbox.text(), self._start_date.date().toPyDate(), self._end_date.date().toPyDate(), 10)
+                #TODO : handle input validation
+                
+                mapping = dict()
+                mapping['Close'] = (SoundParams.tempo, 114)
+                mapping['Volume'] = (SoundParams.pitch, 108)
+
+                manager = SonificationManager(historic_streamer, Sonifier(), mapping)
+                manager._start_caching()
+            else:
+                #TODO: Do something..
+                pass
+
+        else:
+            #TODO: stop the melody
+            self._textbox.setText("SDasaclicked.")
+
 
     def _create_datetime_popup(self, text, position_x, position_y, initial_value = datetime.datetime.today()):
         wid = QDateTimeEdit(self._w)
@@ -42,7 +66,7 @@ class GUIUtils(object):
         return wid
 
     def on_historic_checkbox_click(self):
-        if self.historic_ckbox.isChecked():
+        if self._historic_ckbox.isChecked():
             self._w.resize(250, 350)
             self._start_date = self._create_datetime_popup("Start date", 20, 130)
             self._end_date = self._create_datetime_popup("End date", 20, 160)
