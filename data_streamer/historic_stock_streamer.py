@@ -1,14 +1,13 @@
 from data_streamer import SonifiableDataStreamer
 from yahoo_finance import Share
 from sonifier.parameter_mapping.parameter_mappers import *
+from stock_sonifying_utils import *
 import Consts
 from Consts import SoundParams
 from functools import partial
 from math import ceil
 from math import floor
 from math import log10
-from copy import deepcopy
-
 
 class HistoricStockStreamer(SonifiableDataStreamer):
     """
@@ -29,12 +28,14 @@ class HistoricStockStreamer(SonifiableDataStreamer):
         self._init_avgs()
         self._price_stairs = price_stairs
         self._param_to_sound_param = {
-            'Close': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_pitch, 'Close')),
-                      SoundParams.tempo: TempoMapper(Consts.DEFAULT_PITCH, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_tempo, 'Close'))},
-            'High': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_pitch, 'High'))},
-            'Low': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_pitch, 'Low'))},
-            'Open': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, partial(self._price_to_pitch, 'Open'))},
-            'Volume': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, self._volume_to_pitch)}}
+            'Close': {SoundParams.pitch: PitchMapper(partial(self._price_to_pitch, 'Close')),
+                      SoundParams.tempo: TempoMapper(partial(self._price_to_tempo, 'Close')),
+                      SoundParams.amplitude: AmpMapper(partial(self._price_to_amp, 'Close')),
+                      SoundParams.duration: DurationMapper(partial(self._price_to_duration, 'Close'))},
+            'High': {SoundParams.pitch: PitchMapper(partial(self._price_to_pitch, 'High'))},
+            'Low': {SoundParams.pitch: PitchMapper(partial(self._price_to_pitch, 'Low'))},
+            'Open': {SoundParams.pitch: PitchMapper(partial(self._price_to_pitch, 'Open'))},
+            'Volume': {SoundParams.pitch: PitchMapper(self._volume_to_pitch)}}
 
     def _init_history(self, from_date, to_date):
         self._historic_data = list(reversed(self._share.get_historical(from_date, to_date)))
@@ -56,22 +57,17 @@ class HistoricStockStreamer(SonifiableDataStreamer):
 
         self._volume_scale = 10 ** floor(log10(self._avgs['Volume']))
 
-    """
-    sonifying price to pitch in the following logic:
-    price -> C + (price - <avg price in the given time>) / <discretization factor>
-    for exapmle: a change of 1 dollar will cause (1 / discretization notes)
-    """
     def _price_to_pitch(self, price_param, price_value):
-        return Consts.C + int(ceil((price_value - self._avgs[price_param]) / self._price_stairs))
+        return price_avg_delta_to_pitch(price_value, self._avgs[price_param], self._price_stairs)
 
-    """
-    sonifying price to tempo in the following logic:
-    price -> 1 + <price - <avg price>> beats in a second
-    for example: a change of 1 dollar will cause 2 beats per second
-    """
     def _price_to_tempo(self, price_param, price_value):
-        # in order to prevent negative tempo
-        return min(1, (1 / (1 + max(0,(floor(price_value - self._avgs[price_param]))))))
+        return price_avg_delta_to_tempo(price_value, self._avgs[price_param])
+
+    def _price_to_amp(self, price_param, price_value):
+        return price_avg_delta_to_amp(price_value, self._avgs[price_param])
+
+    def _price_to_duration(self, price_param, price_value):
+        return price_avg_delta_to_duration(price_value, self._avgs[price_param])
 
     """
     sonifying trade volume in the following logic:

@@ -1,5 +1,5 @@
 from abc import ABCMeta, abstractmethod
-
+from Consts import *
 
 class ParameterMapper(object):
     __metaclass__ = ABCMeta
@@ -14,7 +14,7 @@ class ParameterMapper(object):
 
 
 class TempoMapper(ParameterMapper):
-    def __init__(self, default_pitch, default_amp, default_duration, mapping_func):
+    def __init__(self, mapping_func, default_pitch=DEFAULT_PITCH, default_amp=DEFAULT_VOLUME, default_duration=DEFAULT_DURATION):
         super(TempoMapper, self).__init__([default_pitch, default_amp, default_duration], mapping_func)
 
     def map(self, value):
@@ -22,7 +22,7 @@ class TempoMapper(ParameterMapper):
 
 
 class PitchMapper(ParameterMapper):
-    def __init__(self, default_tempo, default_amp, default_duration, mapping_func):
+    def __init__(self, mapping_func, default_tempo=DEFAULT_TEMPO, default_amp=DEFAULT_VOLUME, default_duration=DEFAULT_DURATION):
         super(PitchMapper, self).__init__([default_tempo, default_amp, default_duration], mapping_func)
 
     def map(self, value):
@@ -30,7 +30,7 @@ class PitchMapper(ParameterMapper):
 
 
 class AmpMapper(ParameterMapper):
-    def __init__(self, default_tempo, default_pitch, default_duration, mapping_func):
+    def __init__(self, mapping_func, default_tempo=DEFAULT_TEMPO, default_pitch=DEFAULT_PITCH, default_duration=DEFAULT_DURATION):
         super(AmpMapper, self).__init__([default_tempo, default_pitch, default_duration], mapping_func)
 
     def map(self, value):
@@ -38,7 +38,7 @@ class AmpMapper(ParameterMapper):
 
 
 class DurationMapper(ParameterMapper):
-    def __init__(self, default_tempo, default_pitch, default_amp, mapping_func):
+    def __init__(self, mapping_func, default_tempo=DEFAULT_TEMPO, default_pitch=DEFAULT_PITCH, default_amp=DEFAULT_VOLUME):
         super(DurationMapper, self).__init__([default_tempo, default_pitch, default_amp], mapping_func)
 
     def map(self, value):
