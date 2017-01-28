@@ -8,6 +8,7 @@ from math import ceil
 from math import floor
 from math import log10
 from copy import deepcopy
+import datetime
 
 
 class HistoricStockStreamer(SonifiableDataStreamer):
@@ -37,7 +38,12 @@ class HistoricStockStreamer(SonifiableDataStreamer):
             'Volume': {SoundParams.pitch: PitchMapper(Consts.DEFAULT_TEMPO, Consts.DEFAULT_VOLUME, 1, self._volume_to_pitch)}}
 
     def _init_history(self, from_date, to_date):
-        self._historic_data = list(reversed(self._share.get_historical(from_date, to_date)))
+        if type(from_date) is datetime.date:
+            from_date = from_date.strftime("%Y-%m-%d")
+        if type(to_date) is datetime.date:
+            to_date = to_date.strftime("%Y-%m-%d")
+
+        self._historic_data = self._share.get_historical(from_date, to_date)
         unwanted_params = [unwanted_param for unwanted_param in self._historic_data[0].keys() if unwanted_param not in self._params]
 
         def format_day_data(unwanted_params, day):
