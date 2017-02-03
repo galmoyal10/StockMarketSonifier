@@ -1,7 +1,11 @@
 from abc import ABCMeta, abstractmethod
 from Consts import *
 
+
 class ParameterMapper(object):
+    """
+    defines an interface for mapping data parameter to sonic parameter
+    """
     __metaclass__ = ABCMeta
 
     def __init__(self, default_values, mapping_func):

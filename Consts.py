@@ -1,4 +1,5 @@
 from enum import Enum
+from sonifier.parameter_mapping.parameter_mappers import *
 
 
 class SoundParams(Enum):
@@ -6,6 +7,11 @@ class SoundParams(Enum):
     amplitude = 2
     duration = 3
     tempo = 4
+
+SONIFYING_PARAMS_TO_MAPPERS = {SoundParams.pitch: PitchMapper,
+                               SoundParams.amplitude: AmpMapper,
+                               SoundParams.duration: DurationMapper,
+                               SoundParams.tempo: TempoMapper}
 
 C = 60
 

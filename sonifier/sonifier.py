@@ -1,10 +1,14 @@
 from midi_wrapper import MidiWrapper
 from Consts import SoundParams
 
+
 class Sonifier(object):
+    """
+
+    """
     def __init__(self):
         self._player = MidiWrapper()
-        self._supported_sonifiable_params = [SoundParams.pitch, SoundParams.amplitude, SoundParams.duration]
+        self._supported_sonifiable_params = [SoundParams.pitch, SoundParams.amplitude, SoundParams.duration, SoundParams.tempo]
 
     # see https://www.midi.org/specifications/item/gm-level-1-sound-set for instruments list
     def set_channels(self, instruments):

@@ -1,22 +1,19 @@
 from data_streamer import SonifiableDataStreamer
 from yahoo_finance import Share
-from sonifier.parameter_mapping import parameter_mappers
 from datetime import datetime
-from stock_sonifying_utils import *
-import Consts
+from stock_sonifying import *
 
 TIME_FORMAT = "%I:%M%p"
 
+
 class SonifiableStockStreamer(SonifiableDataStreamer):
     """
-    example snippet:
-        yahoo = StockStreamer("YHOO")
-        yahoo.get_value("price")
-        yahoo.get_value("last_trade_with_time")
+    real time stock data streamer
     """
+
     def refreshable(func):
         """
-        refreshs the value before executing the function
+        refreshes the value before executing the function
         """
         def func_wrapper(self, *args, **kwargs):
             self._share.refresh()
@@ -32,18 +29,17 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         self._param_fetching_methods = {'price': self._share.get_price, 'last_trade_with_time':  self._share.get_last_trade_with_time}
 
         # maps a parameter to a sound paramter and its corresponding mapping logic
-        self._param_to_sound_param = {'price': {Consts.SoundParams.pitch : parameter_mappers.PitchMapper(self._price_to_pitch)},
-                                      'last_trade_with_time': {Consts.SoundParams.amplitude : parameter_mappers.AmpMapper(self._last_trade_to_amp)}}
+        self._param_to_sound_param = {'price': {SoundParams.pitch : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.pitch](self._price_to_pitch),
+                                                SoundParams.tempo : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.tempo](self._price_to_tempo)},
+                                      'last_trade_with_time': {SoundParams.amplitude : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](self._last_trade_to_amp)}}
         self._last_trade_time = datetime(datetime.MINYEAR, 1, 1)
         self._price_stairs = price_stairs
         self._price_sum = 0
         self._prices_sampled = 0
 
-
-    # returns a list of the data parameters
     def get_data_params(self):
         """
-
+        returns a list of the data parameters
         :return: a list of parameters for sonification
         """
         return self._param_fetching_methods.keys()
@@ -51,7 +47,6 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
     @refreshable
     def get_value(self, parameter):
         """
-
         :param parameter: the property to query
         :return: current value of the property
         """
@@ -60,7 +55,6 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
     @refreshable
     def get_data_current_state(self):
         """
-
         :return: dictionary of properties with their current value
         """
         parameters = self._param_fetching_methods.keys()
@@ -77,26 +71,38 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         return self._param_to_sound_param[param].keys()
 
     def _update_price_avg(self, price):
+        """
+        keeps and updated price average since start of sampling
+        :param price: current sampled price
+        :return: current average after update
+        """
         self._prices_sampled += 1
         self._price_sum = + price
         return self._price_sum / self._prices_sampled
 
-    """
-    keeping an updated average price and calculating delta from it to current price
-    """
     def _price_to_pitch(self, price):
+        """
+        maps price to pitch
+        :param price: current sampled price
+        :return: mapping of price against current average to pitch
+        """
         avg = self._update_price_avg(price)
         return price_avg_delta_to_pitch(price, avg, self._price_stairs)
 
     def _price_to_tempo(self, price):
+        """
+        maps price to tempo
+        :param price: current sampled price
+        :return: mapping of price against current average to tempo
+        """
         avg = self._update_price_avg(price)
         return price_avg_delta_to_tempo(price, avg)
 
-    """
-    maps trade time to amplitude
-    playing the wanted instrument only when a new trade is detected
-    """
     def _last_trade_to_amp(self, last_trade_date_str):
+        """
+        maps trade time to amplitude
+        playing the wanted instrument only when a new trade is detected
+        """
         last_trade_date = datetime.strptime(last_trade_date_str, last_trade_date_str.split(' -')[0])
         amp = 0
         if last_trade_date > self._last_trade_time:

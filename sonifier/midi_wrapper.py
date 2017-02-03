@@ -7,7 +7,14 @@ MAX_CHANNEL = 15
 
 
 class MidiWrapper(object):
+    """
+    wrapper for communication with midi server
+    """
+    
     class Channel(object):
+        """
+        represents a single channel of the midi server
+        """
         def __init__(self, player, channel_id, instrument):
             self._player = player
             self._ch_id = channel_id

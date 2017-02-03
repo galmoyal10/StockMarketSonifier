@@ -88,3 +88,6 @@ ENV/
 # Rope project settings
 .ropeproject
 .idea/
+
+for_py2exe/
+.gitignore
