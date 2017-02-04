@@ -36,7 +36,7 @@ class GUIUtils(object):
 
             self._stock_txtbox = self._create_textbox(20, 20, 300, 40)
             self._create_sonify_btns()
-            self._historic_ckbox = self._create_checkbox("View historical data", 60, 70, self.on_historic_checkbox_click)
+            self._historic_ckbox = self._create_checkbox("Sonify historical data", 60, 70, self.on_historic_checkbox_click)
 
             self._param_cbs = list()
             self._create_param_matching_widgets()

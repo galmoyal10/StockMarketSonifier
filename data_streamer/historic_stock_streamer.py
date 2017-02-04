@@ -17,25 +17,24 @@ class HistoricStockStreamer(SonifiableDataStreamer):
     :param share_name: the name of the share
     :param from_date: the beginning of share stats
     :param to_date: the end of share stats
-    :param price_stairs: discretization factor for pitch mapping
     """
-    def __init__(self, share_name, from_date, to_date, price_stairs=10):
+    def __init__(self, share_name, from_date, to_date):
         self._share = Share(share_name)
         if self._share.get_name() is None:
             raise Exception("Could not find share named {0}".format(share_name))
 
-        self._params = self.get_data_params()
-        self._init_history(from_date, to_date)
-        self._current_day = 0
-        self._max_day = len(self._historic_data)
-        self._init_avgs()
-        self._price_stairs = price_stairs
         self._param_to_sound_param = {
             'Close': self._init_price_param_mapping('Close'),
             'High': self._init_price_param_mapping('High'),
             'Low': self._init_price_param_mapping('Low'),
             'Open': self._init_price_param_mapping('Open'),
             'Volume': {SoundParams.pitch: PitchMapper(self._volume_to_pitch)}}
+
+        self._params = self._param_to_sound_param.keys()
+        self._init_history(from_date, to_date)
+        self._current_day = 0
+        self._max_day = len(self._historic_data)
+        self._init_avgs()
 
     def _init_price_param_mapping(self, price_param_name):
         """
@@ -81,7 +80,7 @@ class HistoricStockStreamer(SonifiableDataStreamer):
 
     # price related sonifying functions
     def _price_to_pitch(self, price_param, price_value):
-        return price_avg_delta_to_pitch(price_value, self._avgs[price_param], self._price_stairs)
+        return price_avg_delta_to_pitch(price_value, self._avgs[price_param])
 
     def _price_to_tempo(self, price_param, price_value):
         return price_avg_delta_to_tempo(price_value, self._avgs[price_param])

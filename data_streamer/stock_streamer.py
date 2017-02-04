@@ -1,6 +1,7 @@
 from data_streamer import SonifiableDataStreamer
 from yahoo_finance import Share
-from datetime import datetime
+import datetime
+from sonifier.parameter_mapping.parameter_mappers import *
 from stock_sonifying import *
 
 TIME_FORMAT = "%I:%M%p"
@@ -29,10 +30,9 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         self._param_fetching_methods = {'price': self._share.get_price, 'last trade time':  self._share.get_last_trade_with_time}
 
         # maps a parameter to a sound paramter and its corresponding mapping logic
-        self._param_to_sound_param = {'price': {SoundParams.pitch : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.pitch](self._price_to_pitch),
-                                                SoundParams.tempo : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.tempo](self._price_to_tempo)},
-                                      'last_trade_with_time': {SoundParams.amplitude : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](self._last_trade_to_amp)}}
-        self._last_trade_time = datetime(datetime.MINYEAR, 1, 1)
+        self._param_to_sound_param = {'price': self._init_price_mapping(),
+                                      'last trade time': {SoundParams.amplitude : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](self._last_trade_to_amp)}}
+        self._last_trade_time = datetime.datetime(datetime.MINYEAR, 1, 1)
         self._price_stairs = price_stairs
         self._price_sum = 0
         self._prices_sampled = 0
@@ -44,7 +44,7 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         returns a list of the data parameters
         :return: a list of parameters for sonification
         """
-        return ['Price', 'Last trade time']
+        return ['price', 'last trade time']
 
     @refreshable
     def get_value(self, parameter):
@@ -79,33 +79,38 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         :return: current average after update
         """
         self._prices_sampled += 1
-        self._price_sum = + price
+        self._price_sum += price
         return self._price_sum / self._prices_sampled
 
-    def _price_to_pitch(self, price):
-        """
-        maps price to pitch
-        :param price: current sampled price
-        :return: mapping of price against current average to pitch
-        """
-        avg = self._update_price_avg(price)
-        return price_avg_delta_to_pitch(price, avg, self._price_stairs)
+    def _init_price_mapping(self):
+        return {SoundParams.pitch: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.pitch](self._price_to_pitch),
+                SoundParams.tempo: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.tempo](self._price_to_tempo),
+                SoundParams.amplitude: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](self._price_to_amp),
+                SoundParams.duration: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.duration](self._price_to_duration)}
 
-    def _price_to_tempo(self, price):
-        """
-        maps price to tempo
-        :param price: current sampled price
-        :return: mapping of price against current average to tempo
-        """
+    def _price_to_pitch(self, price_value):
+        return self._map_price(price_value, price_avg_delta_to_pitch)
+
+    def _price_to_tempo(self, price_value):
+        return self._map_price(price_value, price_avg_delta_to_tempo)
+
+    def _price_to_amp(self, price_value):
+        return self._map_price(price_value, price_avg_delta_to_amp)
+
+    def _price_to_duration(self, price_value):
+        return self._map_price(price_value, price_avg_delta_to_duration)
+
+    def _map_price(self, price, mapping_func):
+        price = float(price)
         avg = self._update_price_avg(price)
-        return price_avg_delta_to_tempo(price, avg)
+        return mapping_func(price, avg)
 
     def _last_trade_to_amp(self, last_trade_date_str):
         """
         maps trade time to amplitude
         playing the wanted instrument only when a new trade is detected
         """
-        last_trade_date = datetime.strptime(last_trade_date_str, last_trade_date_str.split(' -')[0])
+        last_trade_date = datetime.datetime.strptime(last_trade_date_str.split(' -')[0], TIME_FORMAT)
         amp = 0
         if last_trade_date > self._last_trade_time:
             self._last_trade_time = last_trade_date

@@ -3,13 +3,13 @@ from math import ceil
 from math import floor
 
 
-def price_avg_delta_to_pitch(price, avg_price, discretization_factor):
+def price_avg_delta_to_pitch(price, avg_price):
     """
     sonifying price to pitch in the following logic:
-    price -> C + (price - <avg price in the given time>) / <discretization factor>
-    for exapmle: a change of 1 dollar will cause (1 / discretization notes)
+    price -> C + (price - <avg price in the given time>) / <PRICE_STARISE>
+    for exapmle: a change of <PRICE_STAIRS> dollars will cause +-1 change in pitch
     """
-    return C + int(ceil((price - avg_price) / discretization_factor))
+    return C + int(ceil((price - avg_price) / PRICE_STAIRS))
 
 
 def price_avg_delta_to_tempo(price, avg_price):
