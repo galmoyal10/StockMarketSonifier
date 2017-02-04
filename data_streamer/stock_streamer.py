@@ -21,7 +21,7 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
 
         return func_wrapper
 
-    def __init__(self, share_name, price_stairs):
+    def __init__(self, share_name, price_stairs=10):
         self._share = Share(share_name)
         if self._share.get_name() is None:
             raise Exception("Could not find share named {0}".format(share_name))

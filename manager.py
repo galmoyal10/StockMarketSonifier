@@ -40,14 +40,7 @@ class SonificationManager(object):
                 mapped_notes = self._data_streamer.get_mapper_for_param(parameter, mapping_method[0]).map(value)
                 self._value_queues[parameter].put(mapped_notes)
 
-    @staticmethod
-    def run():
-        while True:
-            continue
-        # initialize GUI with data_streamer.list_properties()
-        # initialize GUI with sonifier.list_features(d)
-
-    def _start_caching(self):
+    def run(self):
         caching_thread = Thread(target=self._cache_data)
         caching_thread.start()
         sonification_threads = list()
@@ -55,3 +48,5 @@ class SonificationManager(object):
             sonifying_thread = Thread(target=self._sonify_param, args=[channel, parameter])
             sonifying_thread.start()
             sonification_threads.append(sonifying_thread)
+
+

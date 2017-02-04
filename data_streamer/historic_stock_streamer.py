@@ -19,7 +19,7 @@ class HistoricStockStreamer(SonifiableDataStreamer):
     :param to_date: the end of share stats
     :param price_stairs: discretization factor for pitch mapping
     """
-    def __init__(self, share_name, from_date, to_date, price_stairs):
+    def __init__(self, share_name, from_date, to_date, price_stairs=10):
         self._share = Share(share_name)
         if self._share.get_name() is None:
             raise Exception("Could not find share named {0}".format(share_name))
