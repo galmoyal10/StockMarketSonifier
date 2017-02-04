@@ -26,7 +26,7 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         if self._share.get_name() is None:
             raise Exception("Could not find share named {0}".format(share_name))
 
-        self._param_fetching_methods = {'price': self._share.get_price, 'last_trade_with_time':  self._share.get_last_trade_with_time}
+        self._param_fetching_methods = {'price': self._share.get_price, 'last trade time':  self._share.get_last_trade_with_time}
 
         # maps a parameter to a sound paramter and its corresponding mapping logic
         self._param_to_sound_param = {'price': {SoundParams.pitch : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.pitch](self._price_to_pitch),
@@ -37,12 +37,14 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         self._price_sum = 0
         self._prices_sampled = 0
 
-    def get_data_params(self):
+    # returns a list of the data parameters
+    @staticmethod
+    def get_data_params():
         """
         returns a list of the data parameters
         :return: a list of parameters for sonification
         """
-        return self._param_fetching_methods.keys()
+        return ['price', 'last trade time']
 
     @refreshable
     def get_value(self, parameter):

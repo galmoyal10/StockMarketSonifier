@@ -11,26 +11,71 @@ from manager import SonificationManager
 
 class GUIUtils(object):
 
+    def show_error_as_dialogbox(func):
+        """
+        refreshs the value before executing the function
+        """
+
+        def func_wrapper(self, *args, **kwargs):
+            try:
+                return func(self, *args, **kwargs)
+            except Exception as e:
+                self._show_exception_dialog(e)
+
+
+        return func_wrapper
+
+    @show_error_as_dialogbox
     def __init__(self):
-        try:
             # create our window
             app = QApplication(sys.argv)
             self._w = QWidget()
             self._w.setWindowTitle('Sonification Menu')
-
-            # Set window size.
-            self._w.resize(250, 150)
+            self._w.setFixedSize(250, 350)
 
             self._stock_txtbox = self._create_textbox(20, 20, 200, 40)
             self._create_sonify_btns()
-            self._historic_ckbox = self._create_checkbox("View historical data", 60, 60, self.on_historic_checkbox_click)
+            self._historic_ckbox = self._create_checkbox("View historical data", 60, 70, self.on_historic_checkbox_click)
+
+            self._param_cbs = list()
+            self._create_param_matching_widgets()
+
             self._is_playing = False
             # Show the window and run the app
             self._w.show()
             app.exec_()
 
-        except Exception as e:
-            self._show_exception_dialog(e)
+    def _create_param_matching_widgets(self):
+
+        if self._param_cbs:
+            for label, dropdown in self._param_cbs:
+                label.destroy()
+                label.hide()
+                dropdown.destroy()
+                dropdown.hide()
+
+        self._param_cbs = list()
+
+        if self._historic_ckbox.isChecked():
+            data_params = SonifiableStockStreamer.get_data_params()
+            start_y_position = 220
+
+        else:
+            data_params = HistoricStockStreamer.get_data_params()
+            start_y_position = 150
+
+        for i, param in enumerate(data_params):
+            label = QLabel(self._w)
+            label.setText(param + ": ")
+            label.move(20, start_y_position + i * 30)
+            label.show()
+
+            cb = QComboBox(self._w)
+            cb.addItems([sparam.name for sparam in Sonifier.get_supported_sonifiable_params()])
+            cb.move(100, start_y_position + i * 30)
+            cb.show()
+
+            self._param_cbs.append((label, cb))
 
     @staticmethod
     def _show_exception_dialog(e):
@@ -40,19 +85,17 @@ class GUIUtils(object):
         msg.setText("An Exception Occurred")
         msg.setInformativeText(e.message)
         msg.setWindowTitle("Sonification Error")
-        #msg.setDetailedText("The details are as follows:")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
-        #msg.buttonClicked.connect(msgbtn)
 
-        retval = msg.exec_()
-        print "value of pressed message box button:", retval
+        msg.exec_()
 
     def _create_sonify_btns(self):
-        self._create_btn("Sonify", 20, 80, lambda : self.on_sonification_btn_click(True))
-        self._create_btn("Stop sonification", 100, 80, lambda:self.on_sonification_btn_click(False))
+        self._create_btn("Sonify", 20, 110, lambda : self.on_sonification_btn_click(True))
+        self._create_btn("Stop sonification", 100, 110, lambda:self.on_sonification_btn_click(False))
 
     # Create the actions
     @pyqtSlot()
+    @show_error_as_dialogbox
     def on_sonification_btn_click(self, should_start):
         try:
             if should_start:
@@ -60,11 +103,10 @@ class GUIUtils(object):
                     raise Exception("A sonification is already playing! stop it in order to play another one.")
                 if self._historic_ckbox.isChecked():
                     streamer = HistoricStockStreamer(self._stock_txtbox.text(), self._start_date.date().toPyDate(), self._end_date.date().toPyDate())
+
                     mapping = dict()
                     mapping['Close'] = (SoundParams.tempo, 114)
                     mapping['Volume'] = (SoundParams.pitch, 108)
-
-                    #TODO : handle input validation
                 else:
                     streamer = SonifiableStockStreamer(self._stock_txtbox.text())
                     #TODO: @Yarden, Change mapping
@@ -91,12 +133,12 @@ class GUIUtils(object):
         return wid
 
     def on_historic_checkbox_click(self):
+        self._create_param_matching_widgets()
+
         if self._historic_ckbox.isChecked():
-            self._w.resize(250, 350)
-            self._start_date = self._create_datetime_popup("Start date", 20, 130)
-            self._end_date = self._create_datetime_popup("End date", 20, 160)
+            self._start_date = self._create_datetime_popup("Start date", 20, 150)
+            self._end_date = self._create_datetime_popup("End date", 20, 180)
         else:
-            self._w.resize(250, 150)
             self._start_date.hide()
             self._end_date.hide()
 

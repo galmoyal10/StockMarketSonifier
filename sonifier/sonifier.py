@@ -8,7 +8,7 @@ class Sonifier(object):
     """
     def __init__(self):
         self._player = MidiWrapper()
-        self._supported_sonifiable_params = [SoundParams.pitch, SoundParams.amplitude, SoundParams.duration, SoundParams.tempo]
+        self._supported_sonifiable_params = self.get_supported_sonifiable_params()
 
     # see https://www.midi.org/specifications/item/gm-level-1-sound-set for instruments list
     def set_channels(self, instruments):
@@ -26,7 +26,8 @@ class Sonifier(object):
         for channel, value, mapping_func in zip(xrange(0, len(values)), values, mappers):
             self._sonify_value(channel, value, mapping_func)
 
-    def get_supported_sonifiable_params(self):
-        return self._supported_sonifiable_params
+    @staticmethod
+    def get_supported_sonifiable_params():
+        return [SoundParams.pitch, SoundParams.amplitude, SoundParams.duration]
 
 

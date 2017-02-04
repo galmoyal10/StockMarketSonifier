@@ -24,7 +24,7 @@ class HistoricStockStreamer(SonifiableDataStreamer):
         if self._share.get_name() is None:
             raise Exception("Could not find share named {0}".format(share_name))
 
-        self._params = ['Close', 'High', 'Low', 'Open', 'Volume']
+        self._params = self.get_data_params()
         self._init_history(from_date, to_date)
         self._current_day = 0
         self._max_day = len(self._historic_data)
@@ -113,8 +113,9 @@ class HistoricStockStreamer(SonifiableDataStreamer):
         self._current_day += 1
         return current_state
 
-    def get_data_params(self):
-        return self._params
+    @staticmethod
+    def get_data_params():
+        return ['Close', 'High', 'Low', 'Open', 'Volume']
 
     def get_value(self, param):
         # historic streamer is cyclic
