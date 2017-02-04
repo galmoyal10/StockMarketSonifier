@@ -8,6 +8,7 @@ from data_streamer.historic_stock_streamer import HistoricStockStreamer
 from sonifier.sonifier import Sonifier
 from Consts import SoundParams
 from manager import SonificationManager
+from sonifier.midi_wrapper import MidiWrapper
 
 class GUIUtils(object):
 
@@ -31,9 +32,9 @@ class GUIUtils(object):
             app = QApplication(sys.argv)
             self._w = QWidget()
             self._w.setWindowTitle('Sonification Menu')
-            self._w.setFixedSize(250, 400)
+            self._w.setFixedSize(350, 400)
 
-            self._stock_txtbox = self._create_textbox(20, 20, 200, 40)
+            self._stock_txtbox = self._create_textbox(20, 20, 300, 40)
             self._create_sonify_btns()
             self._historic_ckbox = self._create_checkbox("View historical data", 60, 70, self.on_historic_checkbox_click)
 
@@ -48,11 +49,13 @@ class GUIUtils(object):
     def _create_param_matching_widgets(self):
 
         if self._param_cbs:
-            for label, dropdown in self._param_cbs:
+            for label, param_dropdown, instrument_dropdown in self._param_cbs:
                 label.destroy()
                 label.hide()
-                dropdown.destroy()
-                dropdown.hide()
+                param_dropdown.destroy()
+                param_dropdown.hide()
+                instrument_dropdown.destroy()
+                instrument_dropdown.hide()
 
         self._param_cbs = list()
 
@@ -63,7 +66,6 @@ class GUIUtils(object):
         else:
             data_params = SonifiableStockStreamer.get_data_params()
             start_y_position = 150
-
 
         for i, param in enumerate(data_params):
             label = QLabel(self._w)
@@ -76,7 +78,12 @@ class GUIUtils(object):
             cb.move(100, start_y_position + i * 30)
             cb.show()
 
-            self._param_cbs.append((label, cb))
+            insturment_cb = QComboBox(self._w)
+            insturment_cb.addItems(MidiWrapper.get_instruments())
+            insturment_cb.move(180, start_y_position + i * 30)
+            insturment_cb.show()
+
+            self._param_cbs.append((label, cb, insturment_cb))
 
     @staticmethod
     def _show_exception_dialog(e):
@@ -91,8 +98,8 @@ class GUIUtils(object):
         msg.exec_()
 
     def _create_sonify_btns(self):
-        self._create_btn("Sonify", 20, 110, lambda : self.on_sonification_btn_click(True))
-        self._create_btn("Stop sonification", 100, 110, lambda:self.on_sonification_btn_click(False))
+        self._create_btn("Sonify", 50, 110, lambda : self.on_sonification_btn_click(True))
+        self._create_btn("Stop sonification", 150, 110, lambda:self.on_sonification_btn_click(False))
 
     # Create the actions
     @pyqtSlot()
