@@ -31,7 +31,7 @@ class GUIUtils(object):
             app = QApplication(sys.argv)
             self._w = QWidget()
             self._w.setWindowTitle('Sonification Menu')
-            self._w.setFixedSize(250, 350)
+            self._w.setFixedSize(250, 400)
 
             self._stock_txtbox = self._create_textbox(20, 20, 200, 40)
             self._create_sonify_btns()
@@ -57,12 +57,13 @@ class GUIUtils(object):
         self._param_cbs = list()
 
         if self._historic_ckbox.isChecked():
-            data_params = SonifiableStockStreamer.get_data_params()
+            data_params = HistoricStockStreamer.get_data_params()
             start_y_position = 220
 
         else:
-            data_params = HistoricStockStreamer.get_data_params()
+            data_params = SonifiableStockStreamer.get_data_params()
             start_y_position = 150
+
 
         for i, param in enumerate(data_params):
             label = QLabel(self._w)

@@ -44,7 +44,7 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         returns a list of the data parameters
         :return: a list of parameters for sonification
         """
-        return ['price', 'last trade time']
+        return ['Price', 'Last trade time']
 
     @refreshable
     def get_value(self, parameter):
