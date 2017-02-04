@@ -7,10 +7,14 @@ from stock_sonifying import *
 TIME_FORMAT = "%I:%M%p"
 
 
-class SonifiableStockStreamer(SonifiableDataStreamer):
+class SonifiableLiveStockStreamer(SonifiableDataStreamer):
     """
     real time stock data streamer
     """
+
+    SONIFICATION_SUPPORT_MAP = {'price' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
+                                'last trade time' : [SoundParams.amplitude]}
+
 
     def refreshable(func):
         """
@@ -44,7 +48,12 @@ class SonifiableStockStreamer(SonifiableDataStreamer):
         returns a list of the data parameters
         :return: a list of parameters for sonification
         """
-        return ['price', 'last trade time']
+        return SonifiableLiveStockStreamer.SONIFICATION_SUPPORT_MAP.keys()
+
+    @staticmethod
+    def get_supported_sonic_params_for_param(param):
+        return SonifiableLiveStockStreamer.SONIFICATION_SUPPORT_MAP[param]
+
 
     @refreshable
     def get_value(self, parameter):

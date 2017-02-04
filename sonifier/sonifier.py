@@ -28,6 +28,6 @@ class Sonifier(object):
 
     @staticmethod
     def get_supported_sonifiable_params():
-        return [SoundParams.pitch, SoundParams.amplitude, SoundParams.duration]
+        return [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration]
 
 

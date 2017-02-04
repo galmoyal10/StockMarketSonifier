@@ -8,8 +8,14 @@ class SonifiableDataStreamer(object):
     @abstractmethod
     def get_data_params(self):
         """
-
         :return: a list of parameters for sonification
+        """
+        raise NotImplementedError()
+
+    @abstractmethod
+    def get_supported_sonic_params_for_param(self, param):
+        """
+        :return: a list of sonic params that given param can be mapped to
         """
         raise NotImplementedError()
 

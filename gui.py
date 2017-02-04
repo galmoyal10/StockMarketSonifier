@@ -1,10 +1,11 @@
 import sys
 import datetime
 from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
-from data_streamer.stock_streamer import SonifiableStockStreamer
-from data_streamer.historic_stock_streamer import HistoricStockStreamer
+from data_streamer.live_stock_streamer import SonifiableLiveStockStreamer
+from data_streamer.historic_stock_streamer import SonifiableHistoricStockStreamer
 from sonifier.sonifier import Sonifier
 from Consts import SoundParams
 from manager import SonificationManager
@@ -44,12 +45,14 @@ class GUIUtils(object):
             self._is_playing = False
             # Show the window and run the app
             self._w.show()
+            self._manager = None
+            self._sonifier = Sonifier()
             app.exec_()
 
     def _create_param_matching_widgets(self):
 
         if self._param_cbs:
-            for label, param_dropdown, instrument_dropdown in self._param_cbs:
+            for _, label, param_dropdown, instrument_dropdown in self._param_cbs:
                 label.destroy()
                 label.hide()
                 param_dropdown.destroy()
@@ -60,30 +63,38 @@ class GUIUtils(object):
         self._param_cbs = list()
 
         if self._historic_ckbox.isChecked():
-            data_params = HistoricStockStreamer.get_data_params()
+            streamer_type = SonifiableHistoricStockStreamer
             start_y_position = 220
 
         else:
-            data_params = SonifiableStockStreamer.get_data_params()
+            streamer_type = SonifiableLiveStockStreamer
             start_y_position = 150
 
-        for i, param in enumerate(data_params):
+        data_params = dict()
+
+        for param in streamer_type.get_data_params():
+            data_params[param] = [supported_sonic_param for supported_sonic_param in streamer_type.get_supported_sonic_params_for_param(param) if supported_sonic_param in Sonifier.get_supported_sonifiable_params()]
+
+        for i, param in enumerate(data_params.items()):
             label = QLabel(self._w)
-            label.setText(param + ": ")
+            label.setText(param[0] + ": ")
+
             label.move(20, start_y_position + i * 30)
             label.show()
 
-            cb = QComboBox(self._w)
-            cb.addItems([sparam.name for sparam in Sonifier.get_supported_sonifiable_params()])
-            cb.move(100, start_y_position + i * 30)
-            cb.show()
+            sonic_param_cb = QComboBox(self._w)
+            for sonic_param in param[1]:
+                sonic_param_cb.addItem(sonic_param.name, QVariant(sonic_param))
+                sonic_param_cb.move(100, start_y_position + i * 30)
+            sonic_param_cb.show()
 
             insturment_cb = QComboBox(self._w)
-            insturment_cb.addItems(MidiWrapper.get_instruments())
+            for instrument_id, instrument_name in enumerate(MidiWrapper.get_instruments()):
+                insturment_cb.addItem(instrument_name, QVariant(instrument_id))
             insturment_cb.move(180, start_y_position + i * 30)
             insturment_cb.show()
 
-            self._param_cbs.append((label, cb, insturment_cb))
+            self._param_cbs.append((param[0], label, sonic_param_cb, insturment_cb))
 
     @staticmethod
     def _show_exception_dialog(e):
@@ -101,32 +112,36 @@ class GUIUtils(object):
         self._create_btn("Sonify", 50, 110, lambda : self.on_sonification_btn_click(True))
         self._create_btn("Stop sonification", 150, 110, lambda:self.on_sonification_btn_click(False))
 
+    @staticmethod
+    def _get_cb_value(cb):
+        return cb.itemData(cb.currentIndex()).toPyObject()
+
+    def _get_mapping_input(self):
+        mapping = dict()
+        for param_cb in self._param_cbs:
+            mapping[param_cb[0]] = ((GUIUtils._get_cb_value(param_cb[2])), GUIUtils._get_cb_value((param_cb[3])))
+        return mapping
     # Create the actions
     @pyqtSlot()
     @show_error_as_dialogbox
     def on_sonification_btn_click(self, should_start):
         try:
+            mapping = self._get_mapping_input()
             if should_start:
                 if self._is_playing:
                     raise Exception("A sonification is already playing! stop it in order to play another one.")
                 if self._historic_ckbox.isChecked():
-                    streamer = HistoricStockStreamer(self._stock_txtbox.text(), self._start_date.date().toPyDate(), self._end_date.date().toPyDate())
+                    streamer = SonifiableHistoricStockStreamer(self._stock_txtbox.text(), self._start_date.date().toPyDate(), self._end_date.date().toPyDate())
 
-                    mapping = dict()
-                    mapping['Close'] = (SoundParams.tempo, 114)
-                    mapping['Volume'] = (SoundParams.pitch, 108)
                 else:
-                    streamer = SonifiableStockStreamer(self._stock_txtbox.text())
-                    #TODO: @Yarden, Change mapping
-                    mapping = None
+                    streamer = SonifiableLiveStockStreamer(self._stock_txtbox.text())
 
-                manager = SonificationManager(streamer, Sonifier(), mapping)
-                manager.run()
+                self._manager = SonificationManager(streamer, self._sonifier, mapping)
+                self._manager.run()
                 self._is_playing = True
             else:
-                #TODO: stop the melody
                 self._is_playing = False
-                pass
+                self._manager.stop()
 
         except Exception as e:
             self._show_exception_dialog(e)

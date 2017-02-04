@@ -17,13 +17,14 @@ class SonificationManager(object):
         self._value_queues = dict()
         for parameter in self._parameter_names:
             self._value_queues[parameter] = LifoQueue()
+        self._run = True
 
     def _init_sonifier(self, sonifier):
         self._sonifier = sonifier
         self._sonifier.set_channels([instrument[1] for instrument in self._mapping.values()])
 
     def _sonify_param(self, parameter_channel, parameter_name):
-        while True:
+        while self._run:
             sonic_params = self._value_queues[parameter_name].get()
             # tempo is controlled by the manager
             tempo = sonic_params[0]
@@ -33,7 +34,7 @@ class SonificationManager(object):
                 sleep(tempo)
 
     def _cache_data(self):
-        while True:
+        while self._run:
             values = self._data_streamer.get_data_current_state()
             for parameter, mapping_method in self._mapping.items():
                 value = values[parameter]
@@ -41,6 +42,7 @@ class SonificationManager(object):
                 self._value_queues[parameter].put(mapped_notes)
 
     def run(self):
+        self._run = True
         caching_thread = Thread(target=self._cache_data)
         caching_thread.start()
         sonification_threads = list()
@@ -49,4 +51,5 @@ class SonificationManager(object):
             sonifying_thread.start()
             sonification_threads.append(sonifying_thread)
 
-
+    def stop(self):
+        self._run = False

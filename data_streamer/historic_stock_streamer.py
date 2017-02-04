@@ -11,7 +11,14 @@ from math import log10
 import datetime
 
 
-class HistoricStockStreamer(SonifiableDataStreamer):
+class SonifiableHistoricStockStreamer(SonifiableDataStreamer):
+
+    SONIFICATION_SUPPORT_MAP = {'Close' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
+                                'High' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
+                                'Low' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
+                                'Open' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
+                                'Volume' : [SoundParams.pitch]}
+
     """
     historic stock data streamer
     :param share_name: the name of the share
@@ -46,6 +53,10 @@ class HistoricStockStreamer(SonifiableDataStreamer):
                 SoundParams.tempo: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.tempo](partial(self._price_to_tempo, price_param_name)),
                 SoundParams.amplitude: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](partial(self._price_to_amp, price_param_name)),
                 SoundParams.duration: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.duration](partial(self._price_to_duration, price_param_name))}
+
+    @staticmethod
+    def get_supported_sonic_params_for_param(param):
+        return SonifiableHistoricStockStreamer.SONIFICATION_SUPPORT_MAP[param]
 
     def _init_history(self, from_date, to_date):
         """
@@ -114,7 +125,7 @@ class HistoricStockStreamer(SonifiableDataStreamer):
 
     @staticmethod
     def get_data_params():
-        return ['Close', 'High', 'Low', 'Open', 'Volume']
+        return SonifiableHistoricStockStreamer.SONIFICATION_SUPPORT_MAP.keys()
 
     def get_value(self, param):
         # historic streamer is cyclic
