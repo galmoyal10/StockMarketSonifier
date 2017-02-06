@@ -4,6 +4,7 @@ from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+from user_input import StockParamWidgets
 from data_streamer.live_stock_streamer import SonifiableLiveStockStreamer
 from data_streamer.historic_stock_streamer import SonifiableHistoricStockStreamer
 from sonifier.sonifier import Sonifier
@@ -41,7 +42,7 @@ class GUIUtils(object):
             self._create_sonify_btns()
             self._historic_ckbox = self._create_checkbox("Sonify historical data", 60, 70, self.on_historic_checkbox_click)
 
-            self._param_cbs = list()
+            self._param_widgets = list()
             self._column_titles = list()
             self._create_param_matching_widgets()
 
@@ -64,19 +65,35 @@ class GUIUtils(object):
             label.show()
             self._column_titles.append(label)
 
-    def _create_param_matching_widgets(self):
-        if self._param_cbs:
-            for _, label, param_dropdown, instrument_dropdown, enable_check_box in self._param_cbs:
-                label.destroy()
-                label.hide()
-                param_dropdown.destroy()
-                param_dropdown.hide()
-                instrument_dropdown.destroy()
-                instrument_dropdown.hide()
-                enable_check_box.destroy()
-                enable_check_box.hide()
+    def create_label_widget(self, text, x_pos, y_pos):
+        label = QLabel(self._w)
+        label.setText(text + ": ")
+        label.move(x_pos, y_pos)
+        label.show()
+        return label
 
-        self._param_cbs = list()
+    def create_sonic_param_widget(self, sonic_params, x_pos, y_pos):
+        sonic_param_widget = QComboBox(self._w)
+        for sonic_param in sonic_params:
+            sonic_param_widget.addItem(sonic_param.name, QVariant(sonic_param))
+        sonic_param_widget.move(x_pos, y_pos)
+        sonic_param_widget.hide()
+        return sonic_param_widget
+
+    def create_instrument_widget(self, x_pos, y_pos):
+        insturment_widget = QComboBox(self._w)
+        for instrument_id, instrument_name in enumerate(MidiWrapper.get_instruments()):
+            insturment_widget.addItem(instrument_name, QVariant(instrument_id))
+        insturment_widget.move(x_pos, y_pos)
+        insturment_widget.hide()
+        return insturment_widget
+
+    def _create_param_matching_widgets(self):
+        if self._param_widgets:
+            for widget in self._param_widgets:
+                widget[1].destroy()
+
+        self._param_widgets = list()
 
         if self._historic_ckbox.isChecked():
             streamer_type = SonifiableHistoricStockStreamer
@@ -94,27 +111,20 @@ class GUIUtils(object):
 
         for i, param in enumerate(data_params.items()):
             y_position = start_y_position + i * 30
-            label = QLabel(self._w)
-            label.setText(param[0] + ": ")
-            label.move(50, y_position)
-            label.show()
+            label = self.create_label_widget(param[0], GUIUtils.COLUMNS['Stock Parameter'], y_position)
+            sonic_param_drop_down_widget = self.create_sonic_param_widget(param[1], GUIUtils.COLUMNS['Sonic Parameter'], y_position)
+            instrument_drop_down_widget = self.create_instrument_widget(GUIUtils.COLUMNS['Instrument'], y_position)
 
-            sonic_param_cb = QComboBox(self._w)
-            for sonic_param in param[1]:
-                sonic_param_cb.addItem(sonic_param.name, QVariant(sonic_param))
-            sonic_param_cb.move(150, y_position)
-            sonic_param_cb.hide()
-            insturment_cb = QComboBox(self._w)
-            for instrument_id, instrument_name in enumerate(MidiWrapper.get_instruments()):
-                insturment_cb.addItem(instrument_name, QVariant(instrument_id))
-            insturment_cb.move(240, y_position)
-            insturment_cb.hide()
-            param_enable_checkbox = self._create_checkbox("", 10, y_position)
-            param_enable_checkbox.stateChanged.connect(partial(GUIUtils._on_enable_check_box_clicked,
-                                                  [insturment_cb, sonic_param_cb],
-                                                  param_enable_checkbox))
-            param_enable_checkbox.show()
-            self._param_cbs.append((param[0], label, sonic_param_cb, insturment_cb, param_enable_checkbox))
+            param_enable_widget = self._create_checkbox("", 10, y_position)
+            param_enable_widget.stateChanged.connect(partial(GUIUtils._on_enable_check_box_clicked,
+                                                  [instrument_drop_down_widget, sonic_param_drop_down_widget],
+                                                  param_enable_widget))
+            param_enable_widget.show()
+
+            self._param_widgets.append((param[0], StockParamWidgets(label,
+                                                                    param_enable_widget,
+                                                                    sonic_param_drop_down_widget,
+                                                                    instrument_drop_down_widget)))
 
     @staticmethod
     def _on_enable_check_box_clicked(related_cbs, checkbox):
@@ -147,10 +157,11 @@ class GUIUtils(object):
 
     def _get_mapping_input(self):
         mapping = dict()
-        for param_cb in self._param_cbs:
-            if param_cb[4].isChecked():
-                mapping[param_cb[0]] = ((GUIUtils._get_cb_value(param_cb[2])), GUIUtils._get_cb_value((param_cb[3])))
+        for param_name, param_widgets in self._param_widgets.items():
+            if param_widgets.isActivated():
+                mapping[param_name] = (param_widgets.getSonicParam(), param_widgets.getInstrumentParam())
         return mapping
+
     # Create the actions
     @pyqtSlot()
     @show_error_as_dialogbox

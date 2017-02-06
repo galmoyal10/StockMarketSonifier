@@ -1,10 +1,9 @@
-from data_streamer.live_stock_streamer import SonifiableLiveStockStreamer
+from Consts import SoundParams
 from data_streamer.historic_stock_streamer import SonifiableHistoricStockStreamer
 from data_streamer.live_stock_streamer import SonifiableLiveStockStreamer
-from sonifier.sonifier import Sonifier
-from Consts import SoundParams
+from gui import gui
 from manager import SonificationManager
-import gui
+from sonifier.sonifier import Sonifier
 
 
 def GUI():
