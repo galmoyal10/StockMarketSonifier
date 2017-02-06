@@ -3,7 +3,6 @@ from abc import ABCMeta, abstractmethod
 
 class SonifiableDataStreamer(object):
     __metaclass__ = ABCMeta
-    # returns a list of the data properties
 
     @abstractmethod
     def get_data_params(self):

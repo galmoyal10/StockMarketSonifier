@@ -5,17 +5,17 @@ class StockParamWidgets:
         self._sonic_param_widget = sonic_param_widget
         self._instrument_widget = instrument_widget
 
-    def isActivated(self):
+    def is_activated(self):
         return self._enable_widget.isChecked()
 
     @staticmethod
     def _get_drop_down_widget_value(widget):
         return widget.itemData(widget.currentIndex()).toPyObject()
 
-    def getSonicParam(self):
+    def get_sonic_param(self):
         return StockParamWidgets._get_drop_down_widget_value(self._sonic_param_widget)
 
-    def getInstrument(self):
+    def get_instrument(self):
         return StockParamWidgets._get_drop_down_widget_value(self._instrument_widget)
 
     @staticmethod

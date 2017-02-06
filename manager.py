@@ -25,10 +25,12 @@ class SonificationManager(object):
 
     def _sonify_param(self, parameter_channel, parameter_name):
         while self._run:
-            sonic_params = self._value_queues[parameter_name].get()
+            param_value, sonic_params = self._value_queues[parameter_name].get()
             # tempo is controlled by the manager
             tempo = sonic_params[0]
-            print "Sonifing {0}: tempo:{1}, pitch:{2}, volume:{3}, duration:{4}".format(parameter_name, *sonic_params)
+            print "Sonifing {0}: \n" \
+                  "Value: {1} \n" \
+                  "Tempo:{2}, Pitch:{3}, Volume:{4}, Duration:{5}\n************************\n".format(parameter_name, param_value, *sonic_params)
             for i in xrange(0, int(1 / tempo)):
                 self._sonifier.sonify_values_for_channel(sonic_params[1:], parameter_channel)
                 sleep(tempo)
@@ -39,7 +41,7 @@ class SonificationManager(object):
             for parameter, mapping_method in self._mapping.items():
                 value = values[parameter]
                 mapped_notes = self._data_streamer.get_mapper_for_param(parameter, mapping_method[0]).map(value)
-                self._value_queues[parameter].put(mapped_notes)
+                self._value_queues[parameter].put((value,mapped_notes))
 
     def run(self):
         self._run = True

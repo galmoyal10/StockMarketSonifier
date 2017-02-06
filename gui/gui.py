@@ -1,5 +1,6 @@
 import sys
 import datetime
+from PyQt4 import QtCore
 from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
@@ -11,6 +12,39 @@ from sonifier.sonifier import Sonifier
 from manager import SonificationManager
 from sonifier.midi_wrapper import MidiWrapper
 from functools import partial
+import sys
+
+class EmittingStream(QtCore.QObject):
+    textWritten = QtCore.pyqtSignal(str)
+
+    def write(self, text):
+        self.textWritten.emit(text)
+
+
+class OutputWidget(QWidget):
+    def __init__(self, parent = None):
+        super(OutputWidget, self).__init__(parent)
+        sys.stdout = EmittingStream(textWritten=self.normal_output_written)
+        self._textEdit = QTextEdit(self)
+        self._textEdit.resize(350, 250)
+        self._textEdit.move(0,0)
+        self._textEdit.setReadOnly(True)
+
+    def __del__(self):
+        # Restore sys.stdout
+        sys.stdout = sys.__stdout__
+
+    def clear(self):
+        self._textEdit.clear()
+
+    def normal_output_written(self, text):
+        """Append text to the QTextEdit."""
+        cursor = self._textEdit.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        cursor.insertText(text)
+        self._textEdit.setTextCursor(cursor)
+        self._textEdit.ensureCursorVisible()
+
 
 class GUIUtils(object):
 
@@ -30,13 +64,19 @@ class GUIUtils(object):
 
         return func_wrapper
 
+        # Install the custom output stream
+
+    def __del__(self):
+        # Restore sys.stdout
+        sys.stdout = sys.__stdout__
+
     @show_error_as_dialogbox
     def __init__(self):
             # create our window
             app = QApplication(sys.argv)
             self._w = QWidget()
             self._w.setWindowTitle('Sonification Menu')
-            self._w.setFixedSize(370, 400)
+            self._w.setFixedSize(750, 400)
 
             self._stock_txtbox = self._create_textbox(20, 20, 300, 40)
             self._create_sonify_btns()
@@ -46,6 +86,11 @@ class GUIUtils(object):
             self._column_titles = list()
             self._create_param_matching_widgets()
 
+            self._output_widget = OutputWidget(self._w)
+            a = self._output_widget.maximumWidth()
+            self._output_widget.resize(400,250)
+            self._output_widget.move(370, 50)
+            self._output_widget.show()
             self._is_playing = False
             # Show the window and run the app
             self._w.show()
@@ -90,10 +135,10 @@ class GUIUtils(object):
 
     def _create_param_matching_widgets(self):
         if self._param_widgets:
-            for widget in self._param_widgets:
-                widget[1].destroy()
+            for widget in self._param_widgets.values():
+                widget.destroy()
 
-        self._param_widgets = list()
+        self._param_widgets = dict()
 
         if self._historic_ckbox.isChecked():
             streamer_type = SonifiableHistoricStockStreamer
@@ -121,10 +166,10 @@ class GUIUtils(object):
                                                   param_enable_widget))
             param_enable_widget.show()
 
-            self._param_widgets.append((param[0], StockParamWidgets(label,
-                                                                    param_enable_widget,
-                                                                    sonic_param_drop_down_widget,
-                                                                    instrument_drop_down_widget)))
+            self._param_widgets[param[0]] = StockParamWidgets(label,
+                                                              param_enable_widget,
+                                                              sonic_param_drop_down_widget,
+                                                              instrument_drop_down_widget)
 
     @staticmethod
     def _on_enable_check_box_clicked(related_cbs, checkbox):
@@ -157,9 +202,13 @@ class GUIUtils(object):
 
     def _get_mapping_input(self):
         mapping = dict()
+        active = False
         for param_name, param_widgets in self._param_widgets.items():
-            if param_widgets.isActivated():
-                mapping[param_name] = (param_widgets.getSonicParam(), param_widgets.getInstrumentParam())
+            if param_widgets.is_activated():
+                mapping[param_name] = (param_widgets.get_sonic_param(), param_widgets.get_instrument())
+                active = True
+        if not active:
+            raise Exception("Please choose stock parameters")
         return mapping
 
     # Create the actions
@@ -167,17 +216,23 @@ class GUIUtils(object):
     @show_error_as_dialogbox
     def on_sonification_btn_click(self, should_start):
         try:
-            mapping = self._get_mapping_input()
             if should_start:
+                self._output_widget.clear()
+                mapping = self._get_mapping_input()
+                print "***********************\n" \
+                      "     Initializing...   \n" \
+                      "***********************\n"
                 if self._is_playing:
                     raise Exception("A sonification is already playing! stop it in order to play another one.")
+
                 if self._historic_ckbox.isChecked():
                     streamer = SonifiableHistoricStockStreamer(self._stock_txtbox.text(), self._start_date.date().toPyDate(), self._end_date.date().toPyDate())
 
                 else:
                     streamer = SonifiableLiveStockStreamer(self._stock_txtbox.text())
-
+                self._output_widget.clear()
                 self._manager = SonificationManager(streamer, self._sonifier, mapping)
+
                 self._manager.run()
                 self._is_playing = True
             else:
