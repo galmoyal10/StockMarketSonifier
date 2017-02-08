@@ -12,6 +12,9 @@ import datetime
 
 
 class SonifiableHistoricStockStreamer(SonifiableDataStreamer):
+    """
+    historic stock data streamer
+    """
 
     SONIFICATION_SUPPORT_MAP = {'Close' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
                                 'High' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
@@ -19,16 +22,16 @@ class SonifiableHistoricStockStreamer(SonifiableDataStreamer):
                                 'Open' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
                                 'Volume' : [SoundParams.pitch]}
 
-    """
-    historic stock data streamer
-    :param share_name: the name of the share
-    :param from_date: the beginning of share stats
-    :param to_date: the end of share stats
-    """
-    def __init__(self, share_name, from_date, to_date):
-        self._share = Share(share_name)
+    def __init__(self, share_symbol_name, from_date, to_date):
+        """
+        initializes the streamer
+        :param share_symbol_name: the name of the share
+        :param from_date: the beginning of share stats
+        :param to_date: the end of share stats
+        """
+        self._share = Share(share_symbol_name)
         if self._share.get_name() is None:
-            raise Exception("Could not find share named {0}".format(share_name))
+            raise Exception("Could not find share symbol named {0}".format(share_symbol_name))
 
         if to_date > datetime.date.today():
             raise Exception("Could not retrieve stock data in future")
@@ -59,6 +62,11 @@ class SonifiableHistoricStockStreamer(SonifiableDataStreamer):
 
     @staticmethod
     def get_supported_sonic_params_for_param(param):
+        """
+        returns a list of supported sonic parameters for the given stock parameter
+        :param param:
+        :return:
+        """
         return SonifiableHistoricStockStreamer.SONIFICATION_SUPPORT_MAP[param]
 
     def _init_history(self, from_date, to_date):
@@ -92,7 +100,9 @@ class SonifiableHistoricStockStreamer(SonifiableDataStreamer):
 
         self._volume_scale = 10 ** floor(log10(self._avgs['Volume']))
 
-    # price related sonifying functions
+    """
+    price related sonifying functions
+    """
     def _price_to_pitch(self, price_param, price_value):
         return price_avg_delta_to_pitch(price_value, self._avgs[price_param])
 
@@ -113,12 +123,21 @@ class SonifiableHistoricStockStreamer(SonifiableDataStreamer):
         return Consts.C + int(ceil((volume - self._avgs['Volume']) / self._volume_scale))
 
     def get_mapper_for_param(self, param, sound_param):
+        """
+        see SonifiableDataStreamer
+        """
         return self._param_to_sound_param[param][sound_param]
 
     def get_supported_mappers_for_param(self, param):
+        """
+        see SonifiableDataStreamer
+        """
         return self._param_to_sound_param[param].keys()
 
     def get_data_current_state(self):
+        """
+        see SonifiableDataStreamer
+        """
         # historic streamer is cyclic
         if self._current_day == self._max_day:
             self._current_day = 0
@@ -128,9 +147,15 @@ class SonifiableHistoricStockStreamer(SonifiableDataStreamer):
 
     @staticmethod
     def get_data_params():
+        """
+        see SonifiableDataStreamer
+        """
         return SonifiableHistoricStockStreamer.SONIFICATION_SUPPORT_MAP.keys()
 
     def get_value(self, param):
+        """
+        returns the current value for given stock param
+        """
         # historic streamer is cyclic
         if self._current_day == self._max_day:
             self._current_day = 0

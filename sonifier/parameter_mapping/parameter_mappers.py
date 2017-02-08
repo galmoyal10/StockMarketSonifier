@@ -14,6 +14,9 @@ class ParameterMapper(object):
 
     @abstractmethod
     def map(self, value):
+        """
+        should return a list of MIDI parameters (note, velocity, duration) and tempo for the given value
+        """
         raise NotImplementedError()
 
 

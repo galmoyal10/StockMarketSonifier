@@ -28,6 +28,13 @@ class MidiWrapper(object):
             t.start()
 
         def _play_note(self, note, velocity, duration):
+            """
+            sends a MIDI note on command, followed by a note off command
+            :param note: the note to play
+            :param velocity: volume
+            :param duration: the duration of the sound
+            :return:
+            """
             self._player.note_on(note, velocity, self._ch_id)
             time.sleep(duration)
             self._player.note_off(note, velocity, self._ch_id)

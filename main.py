@@ -7,9 +7,15 @@ from sonifier.sonifier import Sonifier
 
 
 def GUI():
+    """
+    starts the gui
+    """
     g = gui.GUIUtils()
 
 def manual():
+    """
+    running app from script, for debugging purposes
+    """
     historic_streamer = SonifiableHistoricStockStreamer('AAPL', '2016-01-01', '2016-04-01')
     live_streamer = SonifiableLiveStockStreamer('AAPL')
     mapping = dict()

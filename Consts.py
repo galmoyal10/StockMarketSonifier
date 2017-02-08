@@ -9,7 +9,6 @@ class SoundParams(Enum):
 
 C = 60
 
-# default tempo is one second
 DEFAULT_TEMPO = 1
 DEFAULT_PITCH = C
 DEFAULT_VOLUME = 90

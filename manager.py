@@ -20,10 +20,19 @@ class SonificationManager(object):
         self._run = True
 
     def _init_sonifier(self, sonifier):
+        """
+        initializes the sonifier and its channels
+        :param sonifier: the given sonifier
+        """
         self._sonifier = sonifier
         self._sonifier.set_channels([instrument[1] for instrument in self._mapping.values()])
 
     def _sonify_param(self, parameter_channel, parameter_name):
+        """
+        sonifying a single param
+        :param parameter_channel: parameter's channel in the sonifier
+        :param parameter_name: the parameter's name
+        """
         while self._run:
             param_value, sonic_params = self._value_queues[parameter_name].get()
             # tempo is controlled by the manager
@@ -36,14 +45,24 @@ class SonificationManager(object):
                 sleep(tempo)
 
     def _cache_data(self):
+        """
+        caches stock data for future sonifications
+        """
         while self._run:
-            values = self._data_streamer.get_data_current_state()
-            for parameter, mapping_method in self._mapping.items():
-                value = values[parameter]
-                mapped_notes = self._data_streamer.get_mapper_for_param(parameter, mapping_method[0]).map(value)
-                self._value_queues[parameter].put((value,mapped_notes))
+            try:
+                values = self._data_streamer.get_data_current_state()
+                for parameter, mapping_method in self._mapping.items():
+                    value = values[parameter]
+                    mapped_notes = self._data_streamer.get_mapper_for_param(parameter, mapping_method[0]).map(value)
+                    self._value_queues[parameter].put((value,mapped_notes))
+            except Exception, e:
+                print e.message
 
     def run(self):
+        """
+        entry point for manager,
+        starts caching and sonifying threads and runs in a loop
+        """
         self._run = True
         caching_thread = Thread(target=self._cache_data)
         caching_thread.start()
@@ -54,4 +73,7 @@ class SonificationManager(object):
             sonification_threads.append(sonifying_thread)
 
     def stop(self):
+        """
+        signals the manager to stop running
+        """
         self._run = False

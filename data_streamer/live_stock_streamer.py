@@ -1,10 +1,14 @@
 from data_streamer import SonifiableDataStreamer
+from data_streamer import DataFetchingException
 from yahoo_finance import Share
+from yahoo_finance import YQLResponseMalformedError
+
 import datetime
 from sonifier.parameter_mapping.parameter_mappers import *
 from stock_sonifying import *
+from Consts import DEFAULT_VOLUME
 
-TIME_FORMAT = "%I:%M%p"
+TIME_FORMAT = "%Y-%m-%d %H:%M:%S"
 
 
 class SonifiableLiveStockStreamer(SonifiableDataStreamer):
@@ -26,18 +30,20 @@ class SonifiableLiveStockStreamer(SonifiableDataStreamer):
 
         return func_wrapper
 
-    def __init__(self, share_name, price_stairs=10):
-        self._share = Share(share_name)
+    def __init__(self, share_symbol_name):
+        """
+        initializes streamer with the given
+        """
+        self._share = Share(share_symbol_name)
         if self._share.get_name() is None:
-            raise Exception("Could not find share named {0}".format(share_name))
+            raise Exception("Could not find share symbol named {0}".format(share_symbol_name))
 
-        self._param_fetching_methods = {'Price': self._share.get_price, 'Last trade time':  self._share.get_last_trade_with_time}
+        self._param_fetching_methods = {'Price': self._share.get_price, 'Last trade time':  self._share.get_trade_datetime}
 
         # maps a parameter to a sound paramter and its corresponding mapping logic
         self._param_to_sound_param = {'Price': self._init_price_mapping(),
                                       'Last trade time': {SoundParams.amplitude : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](self._last_trade_to_amp)}}
         self._last_trade_time = datetime.datetime(datetime.MINYEAR, 1, 1)
-        self._price_stairs = price_stairs
         self._price_sum = 0
         self._prices_sampled = 0
 
@@ -52,6 +58,11 @@ class SonifiableLiveStockStreamer(SonifiableDataStreamer):
 
     @staticmethod
     def get_supported_sonic_params_for_param(param):
+        """
+        returns supported sonic params for given stock parameter
+        :param param: stock parameter's name
+        :return:
+        """
         return SonifiableLiveStockStreamer.SONIFICATION_SUPPORT_MAP[param]
 
 
@@ -68,17 +79,31 @@ class SonifiableLiveStockStreamer(SonifiableDataStreamer):
         """
         :return: dictionary of properties with their current value
         """
-        parameters = self._param_fetching_methods.keys()
-        return {parameter: self._get_value(parameter) for parameter in parameters}
+        try:
+            parameters = self._param_fetching_methods.keys()
+            return {parameter: self._get_value(parameter) for parameter in parameters}
+        except YQLResponseMalformedError:
+            raise DataFetchingException
 
     def _get_value(self, parameter):
+        """
+        gets a value of a single stock parameter
+        :param parameter: paramter's name
+        :return:
+        """
         assert parameter in self._param_fetching_methods.keys(), "Invalid parameter {0}".format(parameter)
         return self._param_fetching_methods[parameter]()
 
     def get_mapper_for_param(self, param, sound_param):
+        """
+        see SonifiableDataStreamer
+        """
         return self._param_to_sound_param[param][sound_param]
 
     def get_supported_mappers_for_param(self, param):
+        """
+        see SonifiableDataStreamer
+        """
         return self._param_to_sound_param[param].keys()
 
     def _update_price_avg(self, price):
@@ -92,11 +117,17 @@ class SonifiableLiveStockStreamer(SonifiableDataStreamer):
         return self._price_sum / self._prices_sampled
 
     def _init_price_mapping(self):
+        """
+        initializes price mapping to sonic params
+        :return:
+        """
         return {SoundParams.pitch: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.pitch](self._price_to_pitch),
                 SoundParams.tempo: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.tempo](self._price_to_tempo),
                 SoundParams.amplitude: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](self._price_to_amp),
                 SoundParams.duration: SONIFYING_PARAMS_TO_MAPPERS[SoundParams.duration](self._price_to_duration)}
-
+    """
+    price mappers
+    """
     def _price_to_pitch(self, price_value):
         return self._map_price(price_value, price_avg_delta_to_pitch)
 
@@ -119,9 +150,9 @@ class SonifiableLiveStockStreamer(SonifiableDataStreamer):
         maps trade time to amplitude
         playing the wanted instrument only when a new trade is detected
         """
-        last_trade_date = datetime.datetime.strptime(last_trade_date_str.split(' -')[0], TIME_FORMAT)
+        last_trade_date = datetime.datetime.strptime(last_trade_date_str[:19], TIME_FORMAT)
         amp = 0
         if last_trade_date > self._last_trade_time:
             self._last_trade_time = last_trade_date
-            amp = 127
+            amp = DEFAULT_VOLUME
         return amp
