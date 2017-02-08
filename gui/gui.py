@@ -5,6 +5,8 @@ from PyQt4.QtCore import pyqtSlot
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
+import yahoo_finance
+
 from user_input import StockParamWidgets
 from data_streamer.live_stock_streamer import SonifiableLiveStockStreamer
 from data_streamer.historic_stock_streamer import SonifiableHistoricStockStreamer
@@ -48,7 +50,7 @@ class OutputWidget(QWidget):
 
 class GUIUtils(object):
 
-    COLUMNS = {"Sonify" : 10, "Stock Parameter" : 50, "Sonic Parameter" : 150, "Instrument" : 240}
+    COLUMNS = {"Sonify?" : 10, "Stock Parameter" : 70, "Sonic Parameter" : 190, "Instrument" : 290}
 
     def show_error_as_dialogbox(func):
         """
@@ -76,7 +78,7 @@ class GUIUtils(object):
             app = QApplication(sys.argv)
             self._w = QWidget()
             self._w.setWindowTitle('Sonification Menu')
-            self._w.setFixedSize(750, 400)
+            self._w.setFixedSize(850, 400)
 
             self._stock_txtbox = self._create_textbox(20, 20, 300, 40)
             self._create_sonify_btns()
@@ -89,7 +91,7 @@ class GUIUtils(object):
             self._output_widget = OutputWidget(self._w)
             a = self._output_widget.maximumWidth()
             self._output_widget.resize(400,250)
-            self._output_widget.move(370, 50)
+            self._output_widget.move(450, 50)
             self._output_widget.show()
             self._is_playing = False
             # Show the window and run the app
@@ -106,6 +108,9 @@ class GUIUtils(object):
         for column in GUIUtils.COLUMNS.items():
             label = QLabel(self._w)
             label.setText(column[0])
+            myFont = QFont()
+            myFont.setBold(True)
+            label.setFont(myFont)
             label.move(column[1], y_position)
             label.show()
             self._column_titles.append(label)
@@ -184,9 +189,12 @@ class GUIUtils(object):
     def _show_exception_dialog(e):
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
-
         msg.setText("An Exception Occurred")
-        msg.setInformativeText(e.message)
+
+        if isinstance(e, yahoo_finance.YQLResponseMalformedError):
+            msg.setInformativeText("Yahoo Finance does not contain the data you requested")
+        else:
+            msg.setInformativeText(e.message)
         msg.setWindowTitle("Sonification Error")
         msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
 
@@ -215,49 +223,50 @@ class GUIUtils(object):
     @pyqtSlot()
     @show_error_as_dialogbox
     def on_sonification_btn_click(self, should_start):
-        try:
-            if should_start:
-                self._output_widget.clear()
-                mapping = self._get_mapping_input()
-                print "***********************\n" \
-                      "     Initializing...   \n" \
-                      "***********************\n"
-                if self._is_playing:
-                    raise Exception("A sonification is already playing! stop it in order to play another one.")
+        if should_start:
+            self._output_widget.clear()
+            mapping = self._get_mapping_input()
+            print "***********************\n" \
+                  "     Initializing...   \n" \
+                  "***********************\n"
+            if self._is_playing:
+                raise Exception("A sonification is already playing! stop it in order to play another one.")
 
-                if self._historic_ckbox.isChecked():
-                    streamer = SonifiableHistoricStockStreamer(self._stock_txtbox.text(), self._start_date.date().toPyDate(), self._end_date.date().toPyDate())
+            if self._historic_ckbox.isChecked():
+                streamer = SonifiableHistoricStockStreamer(self._stock_txtbox.text(), self._start_date.date().toPyDate(), self._end_date.date().toPyDate())
 
-                else:
-                    streamer = SonifiableLiveStockStreamer(self._stock_txtbox.text())
-                self._output_widget.clear()
-                self._manager = SonificationManager(streamer, self._sonifier, mapping)
-
-                self._manager.run()
-                self._is_playing = True
             else:
-                self._is_playing = False
+                streamer = SonifiableLiveStockStreamer(self._stock_txtbox.text())
+            self._output_widget.clear()
+            self._manager = SonificationManager(streamer, self._sonifier, mapping)
+
+            self._manager.run()
+            self._is_playing = True
+        else:
+            if self._is_playing:
                 self._manager.stop()
+                self._is_playing = False
 
-        except Exception as e:
-            self._show_exception_dialog(e)
+    def _create_datetime_popup(self, text, position_x, position_y, initial_value = datetime.date.today()):
 
-    def _create_datetime_popup(self, text, position_x, position_y, initial_value = datetime.datetime.today()):
-        wid = QDateTimeEdit(self._w)
+        label = self.create_label_widget(text,position_x,position_y)
+
+        wid = QDateEdit(self._w)
         wid.setCalendarPopup(True)
-        wid.move(position_x, position_y)
-        wid.setWindowTitle(text)
+        wid.move(position_x + 80, position_y-5)
         wid.setDate(initial_value)
         wid.show()
-        return wid
+        return label, wid
 
     def on_historic_checkbox_click(self):
         self._create_param_matching_widgets()
 
         if self._historic_ckbox.isChecked():
-            self._start_date = self._create_datetime_popup("Start date", 20, 150)
-            self._end_date = self._create_datetime_popup("End date", 20, 180)
+            self._start_date_label, self._start_date = self._create_datetime_popup("Start date", 20, 150)
+            self._end_date_label, self._end_date = self._create_datetime_popup("End date", 20, 180)
         else:
+            self._start_date_label.hide()
+            self._end_date_label.hide()
             self._start_date.hide()
             self._end_date.hide()
 

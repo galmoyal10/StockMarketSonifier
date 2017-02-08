@@ -30,6 +30,9 @@ class SonifiableHistoricStockStreamer(SonifiableDataStreamer):
         if self._share.get_name() is None:
             raise Exception("Could not find share named {0}".format(share_name))
 
+        if to_date > datetime.date.today():
+            raise Exception("Could not retrieve stock data in future")
+
         self._param_to_sound_param = {
             'Close': self._init_price_param_mapping('Close'),
             'High': self._init_price_param_mapping('High'),

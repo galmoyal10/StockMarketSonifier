@@ -12,8 +12,8 @@ class SonifiableLiveStockStreamer(SonifiableDataStreamer):
     real time stock data streamer
     """
 
-    SONIFICATION_SUPPORT_MAP = {'price' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
-                                'last trade time' : [SoundParams.amplitude]}
+    SONIFICATION_SUPPORT_MAP = {'Price' : [SoundParams.pitch, SoundParams.tempo, SoundParams.amplitude, SoundParams.duration],
+                                'Last trade time' : [SoundParams.amplitude]}
 
 
     def refreshable(func):
@@ -31,11 +31,11 @@ class SonifiableLiveStockStreamer(SonifiableDataStreamer):
         if self._share.get_name() is None:
             raise Exception("Could not find share named {0}".format(share_name))
 
-        self._param_fetching_methods = {'price': self._share.get_price, 'last trade time':  self._share.get_last_trade_with_time}
+        self._param_fetching_methods = {'Price': self._share.get_price, 'Last trade time':  self._share.get_last_trade_with_time}
 
         # maps a parameter to a sound paramter and its corresponding mapping logic
-        self._param_to_sound_param = {'price': self._init_price_mapping(),
-                                      'last trade time': {SoundParams.amplitude : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](self._last_trade_to_amp)}}
+        self._param_to_sound_param = {'Price': self._init_price_mapping(),
+                                      'Last trade time': {SoundParams.amplitude : SONIFYING_PARAMS_TO_MAPPERS[SoundParams.amplitude](self._last_trade_to_amp)}}
         self._last_trade_time = datetime.datetime(datetime.MINYEAR, 1, 1)
         self._price_stairs = price_stairs
         self._price_sum = 0
