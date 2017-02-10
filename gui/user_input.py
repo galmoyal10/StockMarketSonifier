@@ -50,7 +50,29 @@ class StockParamWidgets:
         """
         widget.destroy()
         widget.hide()
-        widget.setEnabled(False)
+        StockParamWidgets._set_enabled_widget(widget, False)
+
+    @staticmethod
+    def _set_enabled_widget(widget, state):
+        widget.setEnabled(state)
+
+    def _set_enable_widgets(self, state):
+        StockParamWidgets._set_enabled_widget(self._label, state)
+        StockParamWidgets._set_enabled_widget(self._enable_widget, state)
+        StockParamWidgets._set_enabled_widget(self._sonic_param_widget, state)
+        StockParamWidgets._set_enabled_widget(self._instrument_widget, state)
+
+    def disable(self):
+        """
+        disable sonic param widgets
+        """
+        self._set_enable_widgets(False)
+
+    def enable(self):
+        """
+        enable sonic param widgets
+        """
+        self._set_enable_widgets(True)
 
     def destroy(self):
         """
