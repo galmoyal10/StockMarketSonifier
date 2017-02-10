@@ -304,6 +304,10 @@ class GUIUtils(object):
             self._sonify_button.setText("Stop Sonification")
             for _, sonic_param_widget in self._param_widgets.items():
                 sonic_param_widget.disable()
+
+            if not self._live_ckbox.isChecked():
+                self._start_date.setDisabled(True)
+                self._end_date.setDisabled(True)
         else:
             if self._is_playing:
                 self._live_ckbox.show()
@@ -313,6 +317,10 @@ class GUIUtils(object):
                 self._should_start = True
                 for _, sonic_param_widget in self._param_widgets.items():
                     sonic_param_widget.enable()
+
+                if not self._live_ckbox.isChecked():
+                    self._start_date.setEnabled(True)
+                    self._end_date.setEnabled(True)
                 self._sonify_button.setText("Sonify")
 
     def _create_datetime_popup(self, text, position_x, position_y, initial_value = datetime.date.today()):
