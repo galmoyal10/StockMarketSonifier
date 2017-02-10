@@ -242,7 +242,7 @@ class GUIUtils(object):
         """
         msg = QMessageBox()
         msg.setIcon(QMessageBox.Critical)
-        msg.setText("An Exception Occurred")
+        msg.setText("An Exception Occurred, Please try again.")
 
         if isinstance(e, yahoo_finance.YQLResponseMalformedError):
             msg.setInformativeText("Yahoo Finance does not contain the data you requested")
@@ -336,7 +336,9 @@ class GUIUtils(object):
             self._start_date_label.hide()
             self._end_date_label.hide()
             self._start_date.hide()
+            self._start_date.destroy()
             self._end_date.hide()
+            self._end_date.destroy()
 
     def _create_btn(self, text, position_x, position_y, callback_function):
         """

@@ -50,6 +50,7 @@ class StockParamWidgets:
         """
         widget.destroy()
         widget.hide()
+        widget.setEnabled(False)
 
     def destroy(self):
         """
